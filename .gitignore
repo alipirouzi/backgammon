@@ -15,3 +15,7 @@ web/playwright-report/
 engine/target/
 *.tsbuildinfo
 coverage/
+
+# private keys must never enter the repo
+*.pem
+*.key
