@@ -30,7 +30,8 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Build image
-        run: docker build -t backgammon:current .
+        # The host is amd64; pin the platform so a runner change can never ship an image the host cannot run.
+        run: docker build --platform linux/amd64 -t backgammon:current .
       - name: Configure SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
