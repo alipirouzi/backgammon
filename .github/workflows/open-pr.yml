@@ -32,10 +32,9 @@ jobs:
           set -euo pipefail
           existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq 'length')
           if [ "$existing" != "0" ]; then echo "PR already open for $BRANCH"; exit 0; fi
+          # Title and body come from the head commit; refine later with `gh pr edit`
+          # (editing keeps the App as author).
           title=$(git log -1 --format=%s)
-          body_file=.github/pr-body.md
-          if [ -f "$body_file" ]; then
-            gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "$title" --body-file "$body_file"
-          else
-            gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "$title" --body "Opened automatically for \`$BRANCH\`."
-          fi
+          body=$(git log -1 --format=%b)
+          [ -n "$body" ] || body="Opened automatically for \`$BRANCH\`."
+          gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "$title" --body "$body"

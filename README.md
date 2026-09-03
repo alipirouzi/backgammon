@@ -11,7 +11,7 @@ Foundation plan: [docs/superpowers/plans/2026-09-03-foundation.md](docs/superpow
 ## Status
 
 Only the **foundation** exists: a protected repository, CI, a GitHub-App PR
-flow (workflow in place; the App secrets are `(pending)`, see Secrets), a
+flow, a
 Docker image, and a placeholder page with a health endpoint, deployed over the
 host's forced-command SSH pipeline. Nothing plays backgammon yet.
 
@@ -103,10 +103,9 @@ Notes:
   pushes, no deletions, no bypass actors.
 - Work branches are named `claude/<topic>`. Pushing one triggers
   `open-pr.yml`, which opens the pull request as the GitHub App (so the
-  repository owner can approve it). If `.github/pr-body.md` exists on the
-  branch it becomes the PR body. That file is committed on the work branch
-  only and is removed in the branch's last commit before the squash-merge; it
-  must not reach `master`.
+  repository owner can approve it). The PR title and body are taken from the
+  head commit's subject and body; refine them afterwards with `gh pr edit`,
+  which keeps the App as author.
 - `ci.yml` runs on every push and PR: job `engine` (`cargo fmt --check`,
   `cargo clippy --all-targets -- -D warnings`, `cargo test`, wasm32 build of
   `bg-core`) and job `web` (lint, typecheck, unit tests with coverage, `next
@@ -129,9 +128,9 @@ Notes:
   full Caddyfile (restoring the previous snippet on failure), reloads Caddy
   and prunes old images. The workflow then polls `/health` and `/` for up to
   three minutes and fails if the site is not healthy. Concurrency group
-  `deploy`, no cancel-in-progress. Required reviewers on the `production`
-  environment are `(pending)`; until they are configured a deploy starts
-  without human approval.
+  `deploy`, no cancel-in-progress. A deploy starts automatically once a PR is
+  merged; the PR approval is the human gate, the `production` environment has
+  no separate required reviewers by design.
 - Compose file and Caddy snippet travel inside the image, so the repository
   owns them and no `scp` is needed.
 
@@ -174,10 +173,10 @@ No credentials are in the repository, the compose file, or the image.
   `AUTH_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAIL`, `SEAT_SECRET`
   are `(planned)` for later pieces.
 - GitHub environment `production`: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`.
-- GitHub repository secrets: `GH_APP_ID`, `GH_APP_PRIVATE_KEY` `(pending)`:
-  the GitHub App still has to be registered and installed, and the two secrets
-  set; until then a push to `claude/**` fails in `open-pr.yml` and no PR is
-  opened.
+- GitHub repository secrets: `GH_APP_ID`, `GH_APP_PRIVATE_KEY` for the GitHub
+  App that authors pull requests (permissions: Contents and Pull requests read
+  and write, Metadata read; installed on this repository only). Without them a
+  push to `claude/**` fails in `open-pr.yml` and no PR is opened.
 
 ## Host budget
 
