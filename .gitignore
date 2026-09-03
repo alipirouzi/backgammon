@@ -1,0 +1,11 @@
+.superpowers/
+node_modules/
+target/
+.env
+.env.*
+!.env.example
+.next/
+dist/
+test-results/
+playwright-report/
+.DS_Store
