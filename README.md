@@ -10,15 +10,17 @@ Foundation plan: [docs/superpowers/plans/2026-09-03-foundation.md](docs/superpow
 
 ## Status
 
-Only the **foundation** exists: a protected repository, CI, a GitHub-App PR
-flow, a
+The **foundation** exists (a protected repository, CI, a GitHub-App PR flow, a
 Docker image, and a placeholder page with a health endpoint, deployed over the
-host's forced-command SSH pipeline. Nothing plays backgammon yet.
+host's forced-command SSH pipeline) and the **engine core** crate `bg-core`
+implements the rules, legal plays, notation, cube and match state, and
+replayable records (see [Engine](#engine)). Nothing plays backgammon in the
+browser yet: the bot and the bindings are `(planned)`.
 
 Delivery order (spec section 9); each piece gets its own spec, plan, and PRs:
 
 1. Foundation — this repository state
-2. Engine `(planned)` — Rust crates, club bot, analysis output, WASM and native bindings, parity tests
+2. Engine — in progress: `bg-core` (rules, plays, notation, game and match state, records, test vectors) is done; club bot and analysis output `(planned)`, WASM and native bindings with parity tests `(planned)`
 3. Play `(planned)` — board, three themes, bot games, analysis drawer, post-game review
 4. Multiplayer `(planned)` — invite links, seat claiming, realtime process, chat, optional clocks
 5. Members `(planned)` — magic-link login, profiles, leagues, Glicko-2, scoreboard
@@ -28,8 +30,9 @@ What the placeholder does today: `GET /` renders a page containing
 `id="board-mount"`; `GET /health` returns `200 {"status":"ok"}`. Security
 headers are set in `web/next.config.ts`; `X-Powered-By` is disabled. The
 Content-Security-Policy is sent as `Content-Security-Policy-Report-Only`:
-enforcing it needs per-request nonces for Next's inline hydration scripts
-(`web/proxy.ts`), which is `(planned)`.
+enforcing it needs per-request nonces for Next's inline hydration scripts in
+a Next proxy/middleware `(planned)` — e.g. a future `web/proxy.ts`; no such
+file exists yet.
 
 ## Repository layout
 
@@ -44,7 +47,11 @@ backgammon/
 │       └── deploy.yml               CI success on master -> build image, ship, verify
 ├── engine/                          Cargo workspace (Rust 1.98, edition 2024)
 │   ├── Cargo.toml  Cargo.lock  rust-toolchain.toml
-│   └── bg-core/                     stub crate: Player, Point + tests
+│   ├── bg-core/                     rules engine crate (see Engine below)
+│   │   ├── src/                     player, point, board, position, dice, moves, notation, game, match_play, record, error
+│   │   ├── tests/                   oracle, rules_golden, notation, game_flow, replay, vectors
+│   │   └── examples/gen_vectors.rs  writes engine/vectors/plays.json
+│   └── vectors/                     generated test vectors shared with the bindings (README inside)
 ├── web/                             Next.js app (pnpm workspace member)
 │   ├── src/app/page.tsx             placeholder with #board-mount
 │   ├── src/app/health/route.ts      GET -> {"status":"ok"}
@@ -78,14 +85,15 @@ pnpm --filter web dev          # http://localhost:3000
 pnpm test                                  # Vitest unit tests (all workspace packages)
 pnpm --filter web exec playwright install chromium   # once, before the first e2e run
 pnpm --filter web test:e2e                 # Playwright; builds are required first: pnpm --filter web build
-cd engine && cargo test                    # Rust
+cd engine && cargo test                    # Rust (15–25 s in debug; the oracle property tests dominate)
 ```
 
-Full local gate (CI additionally runs `pnpm test -- --coverage`, Playwright e2e, and the wasm32 build of `bg-core`):
+Full local gate (CI additionally runs `pnpm test -- --coverage` and Playwright e2e):
 
 ```bash
 pnpm install && pnpm lint && pnpm typecheck && pnpm test && pnpm build \
- && (cd engine && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test) \
+ && (cd engine && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test \
+     && cargo build --target wasm32-unknown-unknown -p bg-core) \
  && docker build -t backgammon:local .
 ```
 
@@ -94,6 +102,72 @@ Notes:
 - `pnpm typecheck` runs `next typegen && tsc --noEmit`; `web/next-env.d.ts` is generated and gitignored.
 - CI runs `pnpm test -- --coverage`. A coverage threshold is `(planned)`; none is enforced yet.
 - Image smoke test: `docker run -d --rm --name bg-smoke -p 3999:3000 backgammon:local`, then `curl -fsS http://127.0.0.1:3999/health`; `docker rm -f bg-smoke` afterwards.
+
+## Engine
+
+Rust workspace in `engine/` (toolchain pinned by `engine/rust-toolchain.toml`;
+edition 2024; workspace lints `clippy::all = deny`, `pedantic = warn`, and
+`-D warnings` in CI, so pedantic lints are errors too). Design: spec section
+4; plan: [docs/superpowers/plans/2026-09-03-engine.md](docs/superpowers/plans/2026-09-03-engine.md).
+
+Crates:
+
+- `bg-core` — rules engine: `Board` (absolute), `Position` (relative),
+  `Dice`/`DiceRng`, `Move`/`Play` with `legal_plays`/`apply`/`is_legal`,
+  notation (`Display`/`parse_play`), `Cube`/`Rules`/`GameState` (cube
+  actions incl. beavers, Jacoby, results), `MatchState` (Crawford,
+  post-Crawford, scoring), `Turn`/`Record` with `replay` (seeds are bounded
+  by `record::MAX_SEED` = 2^53 − 1 so they survive `JSON.parse`). Builds for
+  `wasm32-unknown-unknown`: no `std::time`, no OS randomness, no threads, no
+  `unsafe`, no `unwrap()` outside tests.
+- `bg-bot` `(planned)` — evaluator trait, Kazaross-XG2 match equity table,
+  club-strength heuristic evaluator, 1-ply/2-ply search, truncated rollouts,
+  cube decisions, move and cube analysis with error categories.
+- `bg-wasm` `(planned)` — wasm-bindgen binding for the browser; `bg-node`
+  `(planned)` — napi-rs binding for the realtime process. Both expose the same
+  JSON API and are held to the shared vectors by parity tests.
+
+Conventions (binding across crates and bindings; full text in the plan's
+"Domain conventions"):
+
+- Players `white`/`black`. Absolute point numbering is White's: White moves
+  24 → 1 and bears off from 1–6, Black moves 1 → 24. `Board` arrays have 26
+  slots per side: index 0 = bar, 1–24 = points, 25 = off.
+- The rules and the bot work on the relative `Position` of the player on
+  roll: `mine[p]`/`theirs[p]` for `p` in 1–24 are that player's own point
+  numbers (1 = ace point), 0 = off, 25 = bar; `theirs[p]` are the opponent's
+  checkers standing on my point `p`.
+- `Dice { hi, lo }` with `hi >= lo`; 21 distinct rolls. Randomness only via
+  `DiceRng::from_seed(u64)` (ChaCha8), so a game is reproducible from its
+  seed and record on every target.
+- A `Play` is 0–4 `Move`s; `legal_plays` returns one canonical play per
+  resulting position (moves sorted by `from` descending, then `to`
+  descending), sorted. Notation is relative to the mover: `24/18 13/10`,
+  `bar/22* 6/2`, `8/4(2) 6/2(2)`, `6/off 5/off`; the empty play is `""`.
+- Cross-binding data is JSON with `camelCase` keys; the shapes (`Board`,
+  `Dice`, `Move`, `Play` with its `notation` field, `Cube`, `GameState`,
+  `MatchState`, `Turn`, `Record`) are listed in the plan and asserted by
+  `bg-core/tests/game_flow.rs`, `replay.rs` and `notation.rs`.
+
+Tests (`cd engine && cargo test`): `tests/oracle.rs` checks `legal_plays`
+against an independent brute-force generator with proptest and freezes the
+opening-position play counts; `rules_golden.rs` covers bear-off, bar entry,
+larger-die, cube, Crawford and Jacoby edge cases with rule citations;
+`notation.rs` round-trips notation and JSON; `game_flow.rs` and `replay.rs`
+cover game and match flow and seed + record determinism; `vectors.rs` asserts
+that `engine/vectors/plays.json` equals the generator's output and matches
+the engine.
+
+Test vectors: `engine/vectors/plays.json` (opening position × 21 rolls plus
+40 seeded random positions × 3 rolls → legal play notations) is generated,
+never hand-edited. Regenerate with
+
+```bash
+cd engine && cargo run -p bg-core --example gen_vectors -- plays vectors/plays.json
+```
+
+and review the diff; `engine/vectors/README.md` documents the format. The
+decision vectors for the bot (`decisions.json`) are `(planned)`.
 
 ## CI/CD and branch workflow
 
@@ -109,8 +183,9 @@ Notes:
 - `ci.yml` runs on every push and PR: job `engine` (`cargo fmt --check`,
   `cargo clippy --all-targets -- -D warnings`, `cargo test`, wasm32 build of
   `bg-core`) and job `web` (lint, typecheck, unit tests with coverage, `next
-  build`, Playwright e2e). Parity tests and the screenshot matrix from the spec
-  are `(planned)`.
+  build`, Playwright e2e). The engine job's `cargo test` includes the vector
+  drift check (`bg-core/tests/vectors.rs`). Parity tests and the screenshot
+  matrix from the spec are `(planned)`.
 - `deploy.yml` runs when CI succeeds for a `push` to `master` of this
   repository (a fork's pull-request CI run also reports `head_branch ==
   master`, so the event type and head repository are checked as well), in the
