@@ -9,3 +9,9 @@ dist/
 test-results/
 playwright-report/
 .DS_Store
+web/.next/
+web/test-results/
+web/playwright-report/
+engine/target/
+*.tsbuildinfo
+coverage/

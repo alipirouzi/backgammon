@@ -1,0 +1,41 @@
+name: Open PR
+
+# Any push to a claude/** branch opens a pull request authored by the GitHub
+# App, so the repository owner (who never authors these PRs) can approve it.
+# Idempotent: does nothing if an open PR for the branch already exists.
+
+on:
+  push:
+    branches: ["claude/**"]
+
+permissions: {}
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          # The job has permissions: {} so GITHUB_TOKEN carries no scopes; check out with the app token instead.
+          token: ${{ steps.app.outputs.token }}
+      - name: Create pull request if missing
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq 'length')
+          if [ "$existing" != "0" ]; then echo "PR already open for $BRANCH"; exit 0; fi
+          title=$(git log -1 --format=%s)
+          body_file=.github/pr-body.md
+          if [ -f "$body_file" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "$title" --body-file "$body_file"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "$title" --body "Opened automatically for \`$BRANCH\`."
+          fi
