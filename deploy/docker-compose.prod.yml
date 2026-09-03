@@ -1,0 +1,40 @@
+# Production compose for backgammon.automated.ink (Hetzner, /opt/backgammon).
+# Secrets only in /opt/backgammon/.env on the host (POSTGRES_PASSWORD).
+# Extracted from the image by /usr/local/bin/backgammon-deploy on every deploy.
+services:
+  app:
+    image: backgammon:current
+    container_name: backgammon-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://backgammon:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing from /opt/backgammon/.env}@postgres:5432/backgammon
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [edge, internal]
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: backgammon-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: backgammon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing from /opt/backgammon/.env}
+      POSTGRES_DB: backgammon
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backgammon -d backgammon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+volumes:
+  postgres-data:
+
+networks:
+  edge:
+    external: true
+  internal: {}

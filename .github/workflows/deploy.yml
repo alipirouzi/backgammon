@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only a successful CI run for a push to master of this repository may deploy.
+    # A fork's pull-request CI run also reports head_branch == 'master' (forks inherit
+    # the default branch name), so the event type and head repository are checked too.
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.event == 'push'
+          && github.event.workflow_run.head_repository.full_name == github.repository
+          && github.event.workflow_run.head_branch == 'master' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Build image
+        # The host is amd64; pin the platform so a runner change can never ship an image the host cannot run.
+        run: docker build --platform linux/amd64 -t backgammon:current .
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+      - name: Ship image and roll out
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          docker save backgammon:current | gzip \
+            | ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+                "deploy@$DEPLOY_HOST" deploy
+      - name: Verify live site
+        run: |
+          for _ in $(seq 1 36); do
+            if curl -fsS https://backgammon.automated.ink/health | grep -q '"ok"' \
+               && curl -fsS https://backgammon.automated.ink/ | grep -q 'board-mount'; then
+              echo "Live and healthy"; exit 0
+            fi
+            sleep 5
+          done
+          echo "Deployment did not become healthy within 3 minutes"; exit 1
