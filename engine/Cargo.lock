@@ -9,6 +9,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "bg-bot"
+version = "0.1.0"
+dependencies = [
+ "bg-core",
+ "rand_chacha 0.10.0",
+ "rand_core 0.10.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bg-core"
 version = "0.1.0"
 dependencies = [
