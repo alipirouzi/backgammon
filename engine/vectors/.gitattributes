@@ -1,0 +1,3 @@
+# The vectors are compared byte for byte by bg-core/tests/vectors.rs:
+# never let a checkout rewrite their line endings (core.autocrlf).
+*.json text eol=lf
