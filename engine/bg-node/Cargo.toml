@@ -1,0 +1,29 @@
+[package]
+name = "bg-node"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Native Node.js binding of the backgammon engine (napi-rs, JSON in/out)"
+
+[lib]
+crate-type = ["cdylib"]
+# The addon carries no Rust tests (parity is tested from Node, see
+# __test__/); skipping the test harness avoids linking a napi cdylib as an
+# executable under `cargo test`.
+test = false
+doctest = false
+
+[dependencies]
+# The shared JSON marshalling layer lives in bg-wasm's rlib. bg-wasm pulls
+# wasm-bindgen only under `cfg(target_arch = "wasm32")`, so this native build
+# has no wasm-bindgen in its tree (`cargo tree -p bg-node`).
+bg-wasm = { path = "../bg-wasm", default-features = false }
+napi = { version = "3", default-features = false, features = ["napi9"] }
+napi-derive = "3"
+
+[build-dependencies]
+napi-build = "2"
+
+[lints]
+workspace = true

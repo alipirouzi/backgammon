@@ -1,2 +1,4 @@
 packages:
   - web
+  - engine/bg-wasm/pkg
+  - engine/bg-node
