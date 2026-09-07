@@ -6,3 +6,5 @@
 .git
 .superpowers
 docs
+*.pem
+*.key

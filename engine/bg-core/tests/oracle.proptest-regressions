@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 121664aa3d9a0eaaacb094e96cd6ed28bbcd54be9ceb7bc55b4d01404b63e4cb # shrinks to pos = Position { mine: [6, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 1, 1, 0], theirs: [9, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] }, dice = Dice { hi: 6, lo: 5 }
+cc ec84bd8dbbfd56c776a3738217acbf6453c4c8e9c772527f65e5d055d669e2ce # shrinks to seed = 217067544278200, steps = 0, dice = Dice { hi: 1, lo: 1 }

@@ -1,62 +1,34 @@
-//! Backgammon rules engine. Foundation stub: the types below are the seed of
-//! the position model and exist so the Rust toolchain, lints and tests are
-//! exercised in CI from the first commit.
+//! Backgammon rules engine.
+//!
+//! `bg-core` owns the board model, dice, legal-play generation, notation,
+//! game and match state, and match records. It never reads OS randomness:
+//! callers pass a `u64` seed and every result is reproducible on every
+//! target, including `wasm32-unknown-unknown`.
+//!
+//! See `position` for the relative coordinate system used by the rules and
+//! the bot, and `board` for the absolute one used on the wire.
+#![warn(missing_docs)]
 
-/// The two sides. `White` moves from point 24 toward point 1.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Player {
-    White,
-    Black,
-}
+pub mod board;
+pub mod dice;
+pub mod error;
+pub mod game;
+pub mod match_play;
+pub mod moves;
+pub mod notation;
+pub mod player;
+pub mod point;
+pub mod position;
+pub mod record;
 
-impl Player {
-    /// The opposing side.
-    #[must_use]
-    pub const fn opponent(self) -> Self {
-        match self {
-            Self::White => Self::Black,
-            Self::Black => Self::White,
-        }
-    }
-}
-
-/// A board point numbered 1..=24 from White's perspective.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct Point(u8);
-
-impl Point {
-    /// Returns `None` for anything outside 1..=24.
-    #[must_use]
-    pub const fn new(n: u8) -> Option<Self> {
-        if n >= 1 && n <= 24 {
-            Some(Self(n))
-        } else {
-            None
-        }
-    }
-
-    /// The 1-based point number.
-    #[must_use]
-    pub const fn number(self) -> u8 {
-        self.0
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn opponent_is_involutive() {
-        assert_eq!(Player::White.opponent(), Player::Black);
-        assert_eq!(Player::White.opponent().opponent(), Player::White);
-    }
-
-    #[test]
-    fn point_rejects_out_of_range() {
-        assert!(Point::new(0).is_none());
-        assert!(Point::new(25).is_none());
-        assert_eq!(Point::new(1).map(Point::number), Some(1));
-        assert_eq!(Point::new(24).map(Point::number), Some(24));
-    }
-}
+pub use board::Board;
+pub use dice::{Dice, DiceRng};
+pub use error::RulesError;
+pub use game::{Cube, GameResult, GameState, Phase, ResultKind, Rules};
+pub use match_play::MatchState;
+pub use moves::{Move, Play};
+pub use notation::parse_play;
+pub use player::Player;
+pub use point::Point;
+pub use position::Position;
+pub use record::{Action, Record, Turn, replay};
