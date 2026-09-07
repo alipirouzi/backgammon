@@ -1,0 +1,18 @@
+Notice reproduced verbatim from the GNU Backgammon match equity table file
+met/Kazaross-XG2.xml (https://cgit.git.savannah.gnu.org/cgit/gnubg.git/plain/met/Kazaross-XG2.xml),
+whose data is embedded in bg-bot/src/met_data.rs:
+
+     Copyright (C) 2011 Neil Kazaross
+
+     Table rolled up to 9 point match by eXtreme Gammon. Then uses
+     R/K MET which was rolled up to 15 and extrapolated to 25 points
+
+     Transcribed for use by GNUbg by Michael Petch  <mpetch@capp-sysware.com>
+
+     This file is distributed as a part of the GNU Backgammon program.
+
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  This file is offered as-is,
+     without any warranty.
+

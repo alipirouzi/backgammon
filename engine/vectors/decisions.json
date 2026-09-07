@@ -1,0 +1,3884 @@
+[
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 2,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "beginner",
+    "seed": 7,
+    "chosen": "13/11 11/10",
+    "candidates": [
+      {
+        "notation": "13/11 11/10",
+        "equity": -0.039951
+      },
+      {
+        "notation": "24/23 23/21",
+        "equity": -0.189362
+      },
+      {
+        "notation": "8/7 7/5",
+        "equity": -0.248297
+      },
+      {
+        "notation": "13/11 8/7",
+        "equity": -0.254649
+      },
+      {
+        "notation": "6/5 5/3",
+        "equity": -0.268892
+      },
+      {
+        "notation": "24/23 24/22",
+        "equity": -0.277323
+      },
+      {
+        "notation": "24/23 13/11",
+        "equity": -0.310496
+      },
+      {
+        "notation": "13/11 6/5",
+        "equity": -0.312606
+      },
+      {
+        "notation": "24/23 8/6",
+        "equity": -0.326936
+      },
+      {
+        "notation": "8/7 8/6",
+        "equity": -0.338489
+      },
+      {
+        "notation": "8/7 6/4",
+        "equity": -0.441514
+      },
+      {
+        "notation": "24/23 6/4",
+        "equity": -0.497422
+      },
+      {
+        "notation": "6/5 6/4",
+        "equity": -0.575103
+      },
+      {
+        "notation": "24/22 6/5",
+        "equity": -0.59744
+      },
+      {
+        "notation": "24/22 8/7",
+        "equity": -0.601956
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 3,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "intermediate",
+    "seed": 8,
+    "chosen": "8/5 6/5",
+    "candidates": [
+      {
+        "notation": "8/5 6/5",
+        "equity": 0.288357
+      },
+      {
+        "notation": "13/10 10/9",
+        "equity": -0.016209
+      },
+      {
+        "notation": "6/5 5/2",
+        "equity": -0.217707
+      },
+      {
+        "notation": "8/7 7/4",
+        "equity": -0.242628
+      },
+      {
+        "notation": "24/23 23/20",
+        "equity": -0.281212
+      },
+      {
+        "notation": "13/10 6/5",
+        "equity": -0.301019
+      },
+      {
+        "notation": "13/10 8/7",
+        "equity": -0.302789
+      },
+      {
+        "notation": "24/23 13/10",
+        "equity": -0.303635
+      },
+      {
+        "notation": "24/23 24/21",
+        "equity": -0.319046
+      },
+      {
+        "notation": "8/7 6/3",
+        "equity": -0.503087
+      },
+      {
+        "notation": "6/5 6/3",
+        "equity": -0.503121
+      },
+      {
+        "notation": "24/23 6/3",
+        "equity": -0.503865
+      },
+      {
+        "notation": "24/23 8/5",
+        "equity": -0.518337
+      },
+      {
+        "notation": "24/21 8/7",
+        "equity": -0.544325
+      },
+      {
+        "notation": "24/21 6/5",
+        "equity": -0.544596
+      },
+      {
+        "notation": "8/7 8/5",
+        "equity": -0.602869
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 3,
+      "lo": 2
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 9,
+    "chosen": "13/11 11/8",
+    "candidates": [
+      {
+        "notation": "13/11 11/8",
+        "equity": -0.061226
+      },
+      {
+        "notation": "13/10 8/6",
+        "equity": -0.192816
+      },
+      {
+        "notation": "13/11 13/10",
+        "equity": -0.293881
+      },
+      {
+        "notation": "8/6 6/3",
+        "equity": -0.420998
+      },
+      {
+        "notation": "13/11 6/3",
+        "equity": -0.496591
+      },
+      {
+        "notation": "24/21 8/6",
+        "equity": -0.25749
+      },
+      {
+        "notation": "13/11 8/5",
+        "equity": -0.26796
+      },
+      {
+        "notation": "13/10 6/4",
+        "equity": -0.282218
+      },
+      {
+        "notation": "24/22 13/10",
+        "equity": -0.299817
+      },
+      {
+        "notation": "24/21 13/11",
+        "equity": -0.300606
+      },
+      {
+        "notation": "24/22 24/21",
+        "equity": -0.315152
+      },
+      {
+        "notation": "8/6 8/5",
+        "equity": -0.323949
+      },
+      {
+        "notation": "6/4 6/3",
+        "equity": -0.48577
+      },
+      {
+        "notation": "24/22 6/3",
+        "equity": -0.498699
+      },
+      {
+        "notation": "8/5 6/4",
+        "equity": -0.500789
+      },
+      {
+        "notation": "24/22 8/5",
+        "equity": -0.513293
+      },
+      {
+        "notation": "24/21 6/4",
+        "equity": -0.528224
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 4,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "beginner",
+    "seed": 10,
+    "chosen": "13/9 9/8",
+    "candidates": [
+      {
+        "notation": "13/9 9/8",
+        "equity": 0.086248
+      },
+      {
+        "notation": "24/23 13/9",
+        "equity": -0.234627
+      },
+      {
+        "notation": "13/9 6/5",
+        "equity": -0.253279
+      },
+      {
+        "notation": "13/9 8/7",
+        "equity": -0.257021
+      },
+      {
+        "notation": "24/23 24/20",
+        "equity": -0.27226
+      },
+      {
+        "notation": "8/7 7/3",
+        "equity": -0.31366
+      },
+      {
+        "notation": "6/5 6/2",
+        "equity": -0.383146
+      },
+      {
+        "notation": "24/23 6/2",
+        "equity": -0.443372
+      },
+      {
+        "notation": "24/20 6/5",
+        "equity": -0.498869
+      },
+      {
+        "notation": "8/4 6/5",
+        "equity": -0.52276
+      },
+      {
+        "notation": "24/23 8/4",
+        "equity": -0.523423
+      },
+      {
+        "notation": "8/7 6/2",
+        "equity": -0.530008
+      },
+      {
+        "notation": "24/20 8/7",
+        "equity": -0.544238
+      },
+      {
+        "notation": "8/7 8/4",
+        "equity": -0.701377
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 4,
+      "lo": 2
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "intermediate",
+    "seed": 11,
+    "chosen": "8/4 6/4",
+    "candidates": [
+      {
+        "notation": "8/4 6/4",
+        "equity": 0.248572
+      },
+      {
+        "notation": "13/9 8/6",
+        "equity": 0.020009
+      },
+      {
+        "notation": "13/11 13/9",
+        "equity": -0.025409
+      },
+      {
+        "notation": "8/6 6/2",
+        "equity": -0.179325
+      },
+      {
+        "notation": "24/22 22/18",
+        "equity": -0.195985
+      },
+      {
+        "notation": "13/11 11/7",
+        "equity": -0.208023
+      },
+      {
+        "notation": "13/11 6/2",
+        "equity": -0.224287
+      },
+      {
+        "notation": "24/20 8/6",
+        "equity": -0.244241
+      },
+      {
+        "notation": "13/11 8/4",
+        "equity": -0.249052
+      },
+      {
+        "notation": "13/9 6/4",
+        "equity": -0.272325
+      },
+      {
+        "notation": "24/20 13/11",
+        "equity": -0.28731
+      },
+      {
+        "notation": "24/22 13/9",
+        "equity": -0.290157
+      },
+      {
+        "notation": "24/22 24/20",
+        "equity": -0.301844
+      },
+      {
+        "notation": "8/6 8/4",
+        "equity": -0.305442
+      },
+      {
+        "notation": "6/4 6/2",
+        "equity": -0.464683
+      },
+      {
+        "notation": "24/22 6/2",
+        "equity": -0.478158
+      },
+      {
+        "notation": "24/22 8/4",
+        "equity": -0.496685
+      },
+      {
+        "notation": "24/20 6/4",
+        "equity": -0.514573
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 4,
+      "lo": 3
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 12,
+    "chosen": "13/10 10/6",
+    "candidates": [
+      {
+        "notation": "13/10 10/6",
+        "equity": -0.0256
+      },
+      {
+        "notation": "13/10 13/9",
+        "equity": -0.323442
+      },
+      {
+        "notation": "13/10 6/2",
+        "equity": -0.520685
+      },
+      {
+        "notation": "13/10 8/4",
+        "equity": -0.545834
+      },
+      {
+        "notation": "13/9 6/3",
+        "equity": -0.559154
+      },
+      {
+        "notation": "13/9 8/5",
+        "equity": -0.254119
+      },
+      {
+        "notation": "24/20 13/10",
+        "equity": -0.28317
+      },
+      {
+        "notation": "24/21 13/9",
+        "equity": -0.286788
+      },
+      {
+        "notation": "24/21 24/20",
+        "equity": -0.298419
+      },
+      {
+        "notation": "6/3 6/2",
+        "equity": -0.427844
+      },
+      {
+        "notation": "8/5 6/2",
+        "equity": -0.444402
+      },
+      {
+        "notation": "8/4 6/3",
+        "equity": -0.447928
+      },
+      {
+        "notation": "24/21 6/2",
+        "equity": -0.473394
+      },
+      {
+        "notation": "24/20 6/3",
+        "equity": -0.480142
+      },
+      {
+        "notation": "24/21 8/4",
+        "equity": -0.492026
+      },
+      {
+        "notation": "24/20 8/5",
+        "equity": -0.495256
+      },
+      {
+        "notation": "8/5 8/4",
+        "equity": -0.551919
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 5,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "beginner",
+    "seed": 13,
+    "chosen": "24/23 13/8",
+    "candidates": [
+      {
+        "notation": "24/23 13/8",
+        "equity": -0.166631
+      },
+      {
+        "notation": "13/8 6/5",
+        "equity": -0.229437
+      },
+      {
+        "notation": "13/8 8/7",
+        "equity": -0.230374
+      },
+      {
+        "notation": "8/7 7/2",
+        "equity": -0.272389
+      },
+      {
+        "notation": "24/23 23/18",
+        "equity": -0.283553
+      },
+      {
+        "notation": "24/23 8/3",
+        "equity": -0.42049
+      },
+      {
+        "notation": "8/3 6/5",
+        "equity": -0.50149
+      },
+      {
+        "notation": "8/7 8/3",
+        "equity": -0.552867
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 5,
+      "lo": 2
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "intermediate",
+    "seed": 14,
+    "chosen": "13/11 11/6",
+    "candidates": [
+      {
+        "notation": "13/11 11/6",
+        "equity": 0.107144
+      },
+      {
+        "notation": "13/11 13/8",
+        "equity": 0.061927
+      },
+      {
+        "notation": "13/8 6/4",
+        "equity": -0.186322
+      },
+      {
+        "notation": "24/22 13/8",
+        "equity": -0.205718
+      },
+      {
+        "notation": "13/11 8/3",
+        "equity": -0.209699
+      },
+      {
+        "notation": "8/6 8/3",
+        "equity": -0.266845
+      },
+      {
+        "notation": "8/3 6/4",
+        "equity": -0.447928
+      },
+      {
+        "notation": "24/22 8/3",
+        "equity": -0.461813
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 5,
+      "lo": 3
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 15,
+    "chosen": "8/3 6/3",
+    "candidates": [
+      {
+        "notation": "8/3 6/3",
+        "equity": 0.135731
+      },
+      {
+        "notation": "13/10 13/8",
+        "equity": -0.137731
+      },
+      {
+        "notation": "24/21 21/16",
+        "equity": -0.327075
+      },
+      {
+        "notation": "13/10 10/5",
+        "equity": -0.337777
+      },
+      {
+        "notation": "13/8 6/3",
+        "equity": -0.3621
+      },
+      {
+        "notation": "24/21 13/8",
+        "equity": -0.202845
+      },
+      {
+        "notation": "13/10 8/3",
+        "equity": -0.205689
+      },
+      {
+        "notation": "24/21 8/3",
+        "equity": -0.457347
+      },
+      {
+        "notation": "8/5 8/3",
+        "equity": -0.518459
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 5,
+      "lo": 4
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "beginner",
+    "seed": 16,
+    "chosen": "13/9 13/8",
+    "candidates": [
+      {
+        "notation": "13/9 13/8",
+        "equity": -0.004285
+      },
+      {
+        "notation": "24/20 20/15",
+        "equity": -0.115121
+      },
+      {
+        "notation": "13/8 6/2",
+        "equity": -0.163996
+      },
+      {
+        "notation": "13/9 9/4",
+        "equity": -0.195159
+      },
+      {
+        "notation": "24/20 13/8",
+        "equity": -0.2035
+      },
+      {
+        "notation": "13/9 8/3",
+        "equity": -0.224749
+      },
+      {
+        "notation": "8/3 6/2",
+        "equity": -0.390461
+      },
+      {
+        "notation": "8/4 8/3",
+        "equity": -0.472165
+      },
+      {
+        "notation": "24/20 8/3",
+        "equity": -0.492323
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "intermediate",
+    "seed": 17,
+    "chosen": "13/7 8/7",
+    "candidates": [
+      {
+        "notation": "13/7 8/7",
+        "equity": 0.266417
+      },
+      {
+        "notation": "13/7 7/6",
+        "equity": 0.107144
+      },
+      {
+        "notation": "24/23 24/18",
+        "equity": -0.221232
+      },
+      {
+        "notation": "24/18 6/5",
+        "equity": -0.441461
+      },
+      {
+        "notation": "24/18 8/7",
+        "equity": -0.443037
+      },
+      {
+        "notation": "8/2 6/5",
+        "equity": -0.444402
+      },
+      {
+        "notation": "24/23 8/2",
+        "equity": -0.445779
+      },
+      {
+        "notation": "13/7 6/5",
+        "equity": -0.463388
+      },
+      {
+        "notation": "24/23 13/7",
+        "equity": -0.464828
+      },
+      {
+        "notation": "8/7 8/2",
+        "equity": -0.534936
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 2
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 18,
+    "chosen": "24/22 22/16",
+    "candidates": [
+      {
+        "notation": "24/22 22/16",
+        "equity": -0.327075
+      },
+      {
+        "notation": "13/11 11/5",
+        "equity": -0.337777
+      },
+      {
+        "notation": "24/18 8/6",
+        "equity": -0.358549
+      },
+      {
+        "notation": "13/7 8/6",
+        "equity": -0.404856
+      },
+      {
+        "notation": "13/11 8/2",
+        "equity": -0.439813
+      },
+      {
+        "notation": "24/18 13/11",
+        "equity": -0.20476
+      },
+      {
+        "notation": "13/11 13/7",
+        "equity": -0.215397
+      },
+      {
+        "notation": "24/22 24/18",
+        "equity": -0.219011
+      },
+      {
+        "notation": "8/6 8/2",
+        "equity": -0.244121
+      },
+      {
+        "notation": "24/18 6/4",
+        "equity": -0.425278
+      },
+      {
+        "notation": "8/2 6/4",
+        "equity": -0.426719
+      },
+      {
+        "notation": "24/22 8/2",
+        "equity": -0.441131
+      },
+      {
+        "notation": "13/7 6/4",
+        "equity": -0.446482
+      },
+      {
+        "notation": "24/22 13/7",
+        "equity": -0.460536
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 3
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "beginner",
+    "seed": 19,
+    "chosen": "24/21 21/15",
+    "candidates": [
+      {
+        "notation": "24/21 21/15",
+        "equity": -0.106982
+      },
+      {
+        "notation": "13/10 10/4",
+        "equity": -0.186437
+      },
+      {
+        "notation": "24/18 13/10",
+        "equity": -0.194112
+      },
+      {
+        "notation": "13/10 8/2",
+        "equity": -0.19737
+      },
+      {
+        "notation": "13/10 13/7",
+        "equity": -0.229691
+      },
+      {
+        "notation": "24/21 24/18",
+        "equity": -0.302716
+      },
+      {
+        "notation": "24/18 6/3",
+        "equity": -0.335781
+      },
+      {
+        "notation": "13/7 6/3",
+        "equity": -0.364231
+      },
+      {
+        "notation": "24/21 8/2",
+        "equity": -0.375443
+      },
+      {
+        "notation": "8/2 6/3",
+        "equity": -0.408923
+      },
+      {
+        "notation": "24/18 8/5",
+        "equity": -0.421017
+      },
+      {
+        "notation": "24/21 13/7",
+        "equity": -0.445988
+      },
+      {
+        "notation": "13/7 8/5",
+        "equity": -0.507918
+      },
+      {
+        "notation": "8/5 8/2",
+        "equity": -0.562339
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 4
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "intermediate",
+    "seed": 20,
+    "chosen": "8/2 6/2",
+    "candidates": [
+      {
+        "notation": "8/2 6/2",
+        "equity": 0.301531
+      },
+      {
+        "notation": "24/20 20/14",
+        "equity": -0.081093
+      },
+      {
+        "notation": "13/9 9/3",
+        "equity": -0.110002
+      },
+      {
+        "notation": "13/9 8/2",
+        "equity": -0.173318
+      },
+      {
+        "notation": "24/18 13/9",
+        "equity": -0.194386
+      },
+      {
+        "notation": "13/9 13/7",
+        "equity": -0.202919
+      },
+      {
+        "notation": "24/20 24/18",
+        "equity": -0.205799
+      },
+      {
+        "notation": "24/18 6/2",
+        "equity": -0.371173
+      },
+      {
+        "notation": "13/7 6/2",
+        "equity": -0.390036
+      },
+      {
+        "notation": "24/18 8/4",
+        "equity": -0.393123
+      },
+      {
+        "notation": "13/7 8/4",
+        "equity": -0.411027
+      },
+      {
+        "notation": "24/20 8/2",
+        "equity": -0.423444
+      },
+      {
+        "notation": "24/20 13/7",
+        "equity": -0.443991
+      },
+      {
+        "notation": "8/4 8/2",
+        "equity": -0.481786
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 5
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 21,
+    "chosen": "24/18 18/13",
+    "candidates": [
+      {
+        "notation": "24/18 18/13",
+        "equity": -0.064126
+      },
+      {
+        "notation": "13/8 8/2",
+        "equity": -0.28574
+      },
+      {
+        "notation": "24/18 13/8",
+        "equity": -0.306132
+      },
+      {
+        "notation": "13/8 13/7",
+        "equity": -0.348672
+      },
+      {
+        "notation": "24/18 8/3",
+        "equity": -0.608917
+      },
+      {
+        "notation": "13/7 8/3",
+        "equity": -0.375346
+      },
+      {
+        "notation": "8/3 8/2",
+        "equity": -0.44656
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        6,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4,
+        0,
+        1,
+        1,
+        2,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 3
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 22,
+    "chosen": "24/21* 21/15",
+    "candidates": [
+      {
+        "notation": "24/21* 21/15",
+        "equity": -0.119903
+      },
+      {
+        "notation": "24/21* 13/7",
+        "equity": -0.495237
+      },
+      {
+        "notation": "13/10 10/4",
+        "equity": -0.037142
+      },
+      {
+        "notation": "13/10 8/2",
+        "equity": -0.80024
+      },
+      {
+        "notation": "13/10 13/7",
+        "equity": -0.841627
+      },
+      {
+        "notation": "24/21* 8/2",
+        "equity": -0.178486
+      },
+      {
+        "notation": "24/18 13/10",
+        "equity": -0.20778
+      },
+      {
+        "notation": "24/18 18/15",
+        "equity": -0.253732
+      },
+      {
+        "notation": "8/2 6/3",
+        "equity": -0.327189
+      },
+      {
+        "notation": "13/7 6/3",
+        "equity": -0.363615
+      },
+      {
+        "notation": "13/7 8/5",
+        "equity": -0.388399
+      },
+      {
+        "notation": "24/18 6/3",
+        "equity": -0.394832
+      },
+      {
+        "notation": "24/18 8/5",
+        "equity": -0.419455
+      },
+      {
+        "notation": "8/5 8/2",
+        "equity": -0.437767
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        1,
+        0,
+        3,
+        0,
+        1,
+        0,
+        6,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        1,
+        2,
+        3,
+        0,
+        0
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 5
+    },
+    "match": {
+      "length": 7,
+      "myAway": 3,
+      "theirAway": 5,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 23,
+    "chosen": "bar/20 13/7",
+    "candidates": [
+      {
+        "notation": "bar/20 13/7",
+        "equity": -0.249306
+      },
+      {
+        "notation": "bar/20 8/2",
+        "equity": -0.318819
+      },
+      {
+        "notation": "bar/20 20/14",
+        "equity": -0.549422
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        4,
+        0,
+        1,
+        0,
+        6,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2,
+        0,
+        0,
+        3,
+        3,
+        0,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 6,
+      "lo": 3
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 2,
+      "cubeOwnerIsMe": true
+    },
+    "level": "club",
+    "seed": 24,
+    "chosen": "24/21* 18/12*",
+    "candidates": [
+      {
+        "notation": "24/21* 18/12*",
+        "equity": 0.616239
+      },
+      {
+        "notation": "18/12* 12/9*",
+        "equity": 0.556023
+      },
+      {
+        "notation": "24/21* 24/18",
+        "equity": 0.504592
+      },
+      {
+        "notation": "24/18 13/10*",
+        "equity": 0.326053
+      },
+      {
+        "notation": "24/21* 8/2",
+        "equity": 0.309401
+      },
+      {
+        "notation": "24/18 8/5",
+        "equity": 0.757389
+      },
+      {
+        "notation": "13/10* 8/2",
+        "equity": 0.750635
+      },
+      {
+        "notation": "18/12* 13/10*",
+        "equity": 0.745265
+      },
+      {
+        "notation": "24/21* 21/15",
+        "equity": 0.742944
+      },
+      {
+        "notation": "24/21* 13/7",
+        "equity": 0.732457
+      },
+      {
+        "notation": "13/7 8/5",
+        "equity": 0.672398
+      },
+      {
+        "notation": "13/7 7/4",
+        "equity": 0.670846
+      },
+      {
+        "notation": "18/15 15/9*",
+        "equity": 0.644881
+      },
+      {
+        "notation": "13/10* 10/4",
+        "equity": 0.606157
+      },
+      {
+        "notation": "24/18 18/15",
+        "equity": 0.590718
+      },
+      {
+        "notation": "24/18 6/3",
+        "equity": 0.58747
+      },
+      {
+        "notation": "18/15 8/2",
+        "equity": 0.575607
+      },
+      {
+        "notation": "18/15 13/7",
+        "equity": 0.553388
+      },
+      {
+        "notation": "8/2 6/3",
+        "equity": 0.490067
+      },
+      {
+        "notation": "13/7 6/3",
+        "equity": 0.466297
+      },
+      {
+        "notation": "13/10* 13/7",
+        "equity": 0.462168
+      },
+      {
+        "notation": "18/12* 8/5",
+        "equity": 0.450261
+      },
+      {
+        "notation": "18/12* 6/3",
+        "equity": 0.133319
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        4,
+        1,
+        2,
+        0,
+        5,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        3,
+        3,
+        1,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 5,
+      "lo": 2
+    },
+    "match": {
+      "length": 5,
+      "myAway": 1,
+      "theirAway": 3,
+      "crawford": true,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 25,
+    "chosen": "24/22* 6/1",
+    "candidates": [
+      {
+        "notation": "24/22* 6/1",
+        "equity": 0.450175
+      },
+      {
+        "notation": "18/16* 6/1",
+        "equity": 0.432231
+      },
+      {
+        "notation": "18/13 3/1",
+        "equity": -0.23254
+      },
+      {
+        "notation": "6/1 3/1",
+        "equity": -0.244696
+      },
+      {
+        "notation": "13/8 3/1",
+        "equity": -0.48047
+      },
+      {
+        "notation": "6/4 6/1",
+        "equity": 0.400657
+      },
+      {
+        "notation": "24/22* 22/17*",
+        "equity": 0.373187
+      },
+      {
+        "notation": "13/11 6/1",
+        "equity": 0.340437
+      },
+      {
+        "notation": "24/22* 18/13",
+        "equity": 0.275553
+      },
+      {
+        "notation": "18/13 6/4",
+        "equity": 0.180438
+      },
+      {
+        "notation": "13/11 11/6",
+        "equity": 0.173128
+      },
+      {
+        "notation": "13/11 13/8",
+        "equity": 0.140777
+      },
+      {
+        "notation": "18/16* 16/11",
+        "equity": 0.134638
+      },
+      {
+        "notation": "13/8 6/4",
+        "equity": 0.132443
+      },
+      {
+        "notation": "18/13 13/11",
+        "equity": 0.094456
+      },
+      {
+        "notation": "24/22* 13/8",
+        "equity": 0.044038
+      },
+      {
+        "notation": "18/16* 13/8",
+        "equity": -0.05491
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        4,
+        1,
+        3,
+        0,
+        5,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3,
+        0,
+        0,
+        3,
+        3,
+        1,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 5,
+      "lo": 1
+    },
+    "match": {
+      "length": 5,
+      "myAway": 3,
+      "theirAway": 1,
+      "crawford": false,
+      "postCrawford": true,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 26,
+    "chosen": "13/8 2/1",
+    "candidates": [
+      {
+        "notation": "13/8 2/1",
+        "equity": -0.321423
+      },
+      {
+        "notation": "15/10 2/1",
+        "equity": -0.397849
+      },
+      {
+        "notation": "8/3 2/1",
+        "equity": -0.407804
+      },
+      {
+        "notation": "8/7 6/1",
+        "equity": -0.423669
+      },
+      {
+        "notation": "6/1 3/2",
+        "equity": -0.423669
+      },
+      {
+        "notation": "6/1 2/1",
+        "equity": 0.136195
+      },
+      {
+        "notation": "13/12 6/1",
+        "equity": 0.114471
+      },
+      {
+        "notation": "15/14 6/1",
+        "equity": 0.110265
+      },
+      {
+        "notation": "13/8 3/2",
+        "equity": 0.01652
+      },
+      {
+        "notation": "15/14 13/8",
+        "equity": 0.00375
+      },
+      {
+        "notation": "13/8 6/5",
+        "equity": -0.003495
+      },
+      {
+        "notation": "13/12 12/7",
+        "equity": -0.048493
+      },
+      {
+        "notation": "15/14 14/9",
+        "equity": -0.071395
+      },
+      {
+        "notation": "15/10 8/7",
+        "equity": -0.071395
+      },
+      {
+        "notation": "15/10 3/2",
+        "equity": -0.071395
+      },
+      {
+        "notation": "6/5 6/1",
+        "equity": -0.072062
+      },
+      {
+        "notation": "15/10 13/12",
+        "equity": -0.079859
+      },
+      {
+        "notation": "8/7 7/2",
+        "equity": -0.082009
+      },
+      {
+        "notation": "15/10 6/5",
+        "equity": -0.091276
+      },
+      {
+        "notation": "13/12 8/3",
+        "equity": -0.101224
+      },
+      {
+        "notation": "8/3 6/5",
+        "equity": -0.101853
+      },
+      {
+        "notation": "15/14 8/3",
+        "equity": -0.105435
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        6,
+        2,
+        1,
+        2,
+        3,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        4,
+        5,
+        2,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 5,
+      "lo": 1
+    },
+    "match": {
+      "length": 9,
+      "myAway": 4,
+      "theirAway": 2,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 2,
+      "cubeOwnerIsMe": false
+    },
+    "level": "club",
+    "seed": 27,
+    "chosen": "13/12 6/1",
+    "candidates": [
+      {
+        "notation": "13/12 6/1",
+        "equity": -0.450887
+      },
+      {
+        "notation": "6/1 3/2",
+        "equity": -0.450887
+      },
+      {
+        "notation": "6/1 2/1",
+        "equity": -0.450887
+      },
+      {
+        "notation": "13/12 12/7",
+        "equity": -0.466376
+      },
+      {
+        "notation": "13/8 6/5",
+        "equity": -0.466376
+      },
+      {
+        "notation": "13/8 3/2",
+        "equity": 0.019874
+      },
+      {
+        "notation": "13/8 2/1",
+        "equity": 0.019874
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        6,
+        4,
+        2,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "black": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        7,
+        2,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 4,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 28,
+    "chosen": "24/20* 20/19*",
+    "candidates": [
+      {
+        "notation": "24/20* 20/19*",
+        "equity": 0.040516
+      },
+      {
+        "notation": "24/20* 3/2",
+        "equity": -0.236985
+      },
+      {
+        "notation": "24/20* 2/1",
+        "equity": -0.236985
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        8,
+        3,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        3,
+        7,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 6,
+      "lo": 5
+    },
+    "match": {
+      "length": 7,
+      "myAway": 3,
+      "theirAway": 5,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 29,
+    "chosen": "11/6 6/off",
+    "candidates": [
+      {
+        "notation": "11/6 6/off",
+        "equity": 0.0424
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        4,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        13
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 2,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 2,
+      "cubeOwnerIsMe": true
+    },
+    "level": "club",
+    "seed": 30,
+    "chosen": "20/18 19/18",
+    "candidates": [
+      {
+        "notation": "20/18 19/18",
+        "equity": -3.0
+      },
+      {
+        "notation": "19/18 19/17",
+        "equity": -3.0
+      },
+      {
+        "notation": "23/22 20/18",
+        "equity": -3.0
+      },
+      {
+        "notation": "23/22 19/17",
+        "equity": -3.0
+      },
+      {
+        "notation": "23/21 19/18",
+        "equity": -3.0
+      },
+      {
+        "notation": "20/19 19/17",
+        "equity": -2.182417
+      },
+      {
+        "notation": "20/18 16/15",
+        "equity": -2.182417
+      },
+      {
+        "notation": "20/18 10/9",
+        "equity": -2.182417
+      },
+      {
+        "notation": "20/18 4/3",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/18 18/16",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/18 16/14",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/18 10/8",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/18 4/2",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/17 16/15",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/17 10/9",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/17 4/3",
+        "equity": -2.182417
+      },
+      {
+        "notation": "20/18 5/4",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/18 5/3",
+        "equity": -2.182417
+      },
+      {
+        "notation": "19/17 5/4",
+        "equity": -2.182417
+      },
+      {
+        "notation": "23/22 23/21",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/22 22/20",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/22 16/14",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/22 10/8",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/22 4/2",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/21 20/19",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/21 16/15",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/21 10/9",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/21 4/3",
+        "equity": -2.268932
+      },
+      {
+        "notation": "20/19 16/14",
+        "equity": -2.268932
+      },
+      {
+        "notation": "20/19 10/8",
+        "equity": -2.268932
+      },
+      {
+        "notation": "20/19 4/2",
+        "equity": -2.268932
+      },
+      {
+        "notation": "16/15 15/13",
+        "equity": -2.268932
+      },
+      {
+        "notation": "16/15 10/8",
+        "equity": -2.268932
+      },
+      {
+        "notation": "16/15 4/2",
+        "equity": -2.268932
+      },
+      {
+        "notation": "16/14 10/9",
+        "equity": -2.268932
+      },
+      {
+        "notation": "16/14 4/3",
+        "equity": -2.268932
+      },
+      {
+        "notation": "10/9 9/7",
+        "equity": -2.268932
+      },
+      {
+        "notation": "10/9 4/2",
+        "equity": -2.268932
+      },
+      {
+        "notation": "10/8 4/3",
+        "equity": -2.268932
+      },
+      {
+        "notation": "23/22 5/3",
+        "equity": -2.268933
+      },
+      {
+        "notation": "23/21 5/4",
+        "equity": -2.268933
+      },
+      {
+        "notation": "20/19 5/3",
+        "equity": -2.268933
+      },
+      {
+        "notation": "16/15 5/3",
+        "equity": -2.268933
+      },
+      {
+        "notation": "16/14 5/4",
+        "equity": -2.268933
+      },
+      {
+        "notation": "10/9 5/3",
+        "equity": -2.268933
+      },
+      {
+        "notation": "10/8 5/4",
+        "equity": -2.268933
+      },
+      {
+        "notation": "5/4 4/2",
+        "equity": -2.268933
+      },
+      {
+        "notation": "5/3 4/3",
+        "equity": -2.268933
+      },
+      {
+        "notation": "4/3 4/2",
+        "equity": -2.268933
+      },
+      {
+        "notation": "4/3 3/1",
+        "equity": -2.268933
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        7,
+        5,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        5,
+        4,
+        0
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 6,
+      "lo": 5
+    },
+    "match": {
+      "length": 5,
+      "myAway": 1,
+      "theirAway": 3,
+      "crawford": true,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 31,
+    "chosen": "11/6 6/off",
+    "candidates": [
+      {
+        "notation": "11/6 6/off",
+        "equity": 0.296324
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        0,
+        5,
+        1,
+        0,
+        0,
+        1,
+        0,
+        2,
+        2,
+        0,
+        0,
+        1,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        3,
+        2,
+        5,
+        2
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 3,
+      "lo": 2
+    },
+    "match": {
+      "length": 5,
+      "myAway": 3,
+      "theirAway": 1,
+      "crawford": false,
+      "postCrawford": true,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 32,
+    "chosen": "20/18 8/5",
+    "candidates": [
+      {
+        "notation": "20/18 8/5",
+        "equity": -0.997924
+      },
+      {
+        "notation": "15/13 8/5",
+        "equity": -0.997924
+      },
+      {
+        "notation": "12/10 8/5",
+        "equity": -0.997924
+      },
+      {
+        "notation": "9/7 8/5",
+        "equity": -0.997924
+      },
+      {
+        "notation": "9/7 7/4",
+        "equity": -0.997924
+      },
+      {
+        "notation": "8/6 8/5",
+        "equity": -0.995645
+      },
+      {
+        "notation": "8/5 6/4",
+        "equity": -0.995645
+      },
+      {
+        "notation": "8/5 3/1",
+        "equity": -0.995645
+      },
+      {
+        "notation": "20/18 18/15",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/18 15/12",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/18 12/9",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/18 9/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/17 15/13",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/17 12/10",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/17 9/7",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/17 8/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/17 6/4",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/17 3/1",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/13 15/12",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/13 13/10",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/13 12/9",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/13 9/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/12 9/7",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/12 8/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/12 6/4",
+        "equity": -0.995909
+      },
+      {
+        "notation": "15/12 3/1",
+        "equity": -0.995909
+      },
+      {
+        "notation": "12/10 10/7",
+        "equity": -0.995909
+      },
+      {
+        "notation": "12/10 9/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "12/9 8/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "12/9 6/4",
+        "equity": -0.995909
+      },
+      {
+        "notation": "12/9 3/1",
+        "equity": -0.995909
+      },
+      {
+        "notation": "9/7 9/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "9/6 8/6",
+        "equity": -0.995909
+      },
+      {
+        "notation": "9/6 3/1",
+        "equity": -0.995909
+      },
+      {
+        "notation": "8/6 6/3",
+        "equity": -0.995909
+      },
+      {
+        "notation": "20/18 6/3",
+        "equity": -0.996156
+      },
+      {
+        "notation": "15/13 6/3",
+        "equity": -0.996156
+      },
+      {
+        "notation": "12/10 6/3",
+        "equity": -0.996156
+      },
+      {
+        "notation": "9/7 6/3",
+        "equity": -0.996156
+      },
+      {
+        "notation": "6/4 4/1",
+        "equity": -0.996156
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        2,
+        5,
+        6,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        6,
+        9
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 3,
+      "lo": 1
+    },
+    "match": {
+      "length": 9,
+      "myAway": 4,
+      "theirAway": 2,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 2,
+      "cubeOwnerIsMe": false
+    },
+    "level": "club",
+    "seed": 33,
+    "chosen": "1/off(2)",
+    "candidates": [
+      {
+        "notation": "1/off(2)",
+        "equity": 0.988302
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        2,
+        5,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        11
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 6,
+      "lo": 4
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 34,
+    "chosen": "1/off(2)",
+    "candidates": [
+      {
+        "notation": "1/off(2)",
+        "equity": 0.961856
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        3,
+        8,
+        0,
+        0,
+        1,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        7,
+        6
+      ]
+    },
+    "onRoll": "black",
+    "dice": {
+      "hi": 6,
+      "lo": 4
+    },
+    "match": {
+      "length": 7,
+      "myAway": 3,
+      "theirAway": 5,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 1,
+      "cubeOwnerIsMe": null
+    },
+    "level": "club",
+    "seed": 35,
+    "chosen": "2/off(2)",
+    "candidates": [
+      {
+        "notation": "2/off(2)",
+        "equity": 0.918308
+      }
+    ]
+  },
+  {
+    "board": {
+      "white": [
+        0,
+        4,
+        8,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "black": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        10
+      ]
+    },
+    "onRoll": "white",
+    "dice": {
+      "hi": 6,
+      "lo": 1
+    },
+    "match": {
+      "length": 0,
+      "myAway": 0,
+      "theirAway": 0,
+      "crawford": false,
+      "postCrawford": false,
+      "cube": 2,
+      "cubeOwnerIsMe": true
+    },
+    "level": "club",
+    "seed": 36,
+    "chosen": "6/off 1/off",
+    "candidates": [
+      {
+        "notation": "6/off 1/off",
+        "equity": -0.991812
+      },
+      {
+        "notation": "6/5 5/off",
+        "equity": -0.995498
+      },
+      {
+        "notation": "6/off 4/3",
+        "equity": -0.995498
+      },
+      {
+        "notation": "6/off 2/1",
+        "equity": -0.995498
+      }
+    ]
+  }
+]

@@ -32,7 +32,13 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
-      - run: cargo build --target wasm32-unknown-unknown -p bg-core
+      - name: Perf budget and full decision-vector drift (release)
+        run: |
+          set -o pipefail
+          cargo test --release -p bg-bot --test perf --test vectors -- --include-ignored --show-output 2>&1 | tee release-tests.log
+          grep -q '^test perf_mean_club_decision_from_middlegame_is_under_budget \.\.\. ok$' release-tests.log
+          grep -q '^test committed_decisions_json_equals_regenerated_output \.\.\. ok$' release-tests.log
+      - run: cargo build --target wasm32-unknown-unknown -p bg-core -p bg-bot
 
   web:
     runs-on: ubuntu-latest
