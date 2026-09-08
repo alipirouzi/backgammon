@@ -235,18 +235,27 @@ cubeless money equity in a money game, and in a match the "equivalent to money
 game" normalisation of match winning chances where a single game at the
 current cube is ±1, so the same error thresholds apply everywhere.
 
-Cube decisions (`src/cube.rs`) use the **dead-cube model** (Janowski cube-life
-index x = 0): no double, double/take and double/drop are compared as if the
-game were then played cubeless at the resulting cube value, so the model
-doubles a little early and takes a little late compared with a live-cube
-model. In a **money-game race** that arithmetic would double any lead, so the
-action there follows Tom Keith's count instead (double when the bumped lead
-is at most 4, redouble at most 3, take when it is at least 2; the three
-equities are still reported); match-play races and all contact positions
-keep the MET model. Cube errors are graded against the recommended action.
-The `takePoint` is the gammonless dead-cube take point (0.25 in a money
-game; MET-derived in a match). In the Crawford game or when the opponent
-owns the cube the action is `noDouble` with `canDouble: false`.
+Cube decisions (`src/cube.rs`) compute the three **dead-cube** equities
+(Janowski cube-life index x = 0): no double, double/take and double/drop as
+if the game were then played cubeless at the resulting cube value. On their
+own those equities would double any positive advantage (including the
+opening position), so the action is gated by a **doubling window** — a
+threshold approximation of a live-cube model: an initial double needs a
+cubeless win probability of at least 0.68 (a redouble 0.70) and must still
+gain under the dead-cube arithmetic; the opponent takes while double/take
+beats double/drop (gammonless: 25 % in a money game, the MET-derived take
+point in a match); a position with at least 85 % wins and 25 % gammons is
+too good to double when gammons are worth something at the score, as is any
+position where playing on cubeless already beats cashing. The same window
+gates match play, so a double is never recommended below 0.68 even at scores
+(2-away/2-away) where the arithmetic alone would double earlier. In a
+**money-game race** the action follows Tom Keith's count instead (double
+when the bumped lead is at most 4, redouble at most 3, take when it is at
+least 2; the three equities are still reported). Cube errors are graded
+against the recommended action. The `takePoint` is the gammonless dead-cube
+take point (0.25 in a money game; MET-derived in a match). In the Crawford
+game or when the opponent owns the cube the action is `noDouble` with
+`canDouble: false`.
 
 Error categories (`bg_bot::analysis::thresholds`, asserted by tests, following
 XG's published legend): `best` ≤ 0.0005 equity lost, `fine` < 0.020, `error`
