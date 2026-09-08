@@ -1,0 +1,26 @@
+[package]
+name = "bg-wasm"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "WebAssembly binding of the backgammon engine (JSON in/out)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bg-core = { path = "../bg-core" }
+bg-bot = { path = "../bg-bot" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# The wasm-bindgen exports live behind `cfg(target_arch = "wasm32")` so the
+# rlib builds natively (for `bg-node` and `cargo test`) without wasm-bindgen.
+# Pinned exactly: wasm-pack needs a wasm-bindgen-cli of the same version, and
+# 0.2.127 is the one installed locally and in CI.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.127"
+
+[lints]
+workspace = true

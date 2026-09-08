@@ -19,3 +19,8 @@ coverage/
 # private keys must never enter the repo
 *.pem
 *.key
+# generated binding artefacts
+engine/bg-wasm/pkg/
+engine/bg-node/*.node
+engine/bg-node/index.js
+engine/bg-node/index.d.ts

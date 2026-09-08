@@ -8,3 +8,9 @@
 docs
 *.pem
 *.key
+# engine/ stays in the context (the Rust stage builds bg-wasm from it), but
+# locally generated binding artefacts do not: the image builds its own pkg.
+engine/bg-wasm/pkg
+engine/bg-node/*.node
+engine/bg-node/index.js
+engine/bg-node/index.d.ts
