@@ -1,6 +1,7 @@
-//! Cube decisions under the **dead-cube MET model**.
+//! Cube decisions: a **doubling window** on top of the **dead-cube MET
+//! model**.
 //!
-//! # Model (plan, Task 10; Janowski cube-life index `x = 0`)
+//! # Equities (plan, Task 10; Janowski cube-life index `x = 0`)
 //!
 //! Let `p` be the outcome probabilities for the player considering a double
 //! ("me", `pos.mine`, on roll before rolling). Three equities are compared,
@@ -17,11 +18,48 @@
 //! * **Double/drop** (`DP`): I win the current cube value — exactly `+1` on
 //!   this scale, by construction.
 //!
-//! The model is "dead cube" because the taker's future cube leverage
-//! (redoubles) is ignored: it therefore doubles a little early and takes a
-//! little late compared with a live-cube (Janowski `x ≈ 0.7`) model. It is
-//! documented as such and is the model the plan prescribes for contact
-//! positions and for match play.
+//! The equities are "dead cube" because all future cube leverage (mine if I
+//! wait, the taker's redoubles if I double) is ignored. On their own they
+//! are not a doubling rule: with `DT = 2·E` and `ND = E` in a money game,
+//! *any* positive cubeless equity would call for a double — the model would
+//! double from the opening position (`E ≈ 0.02`). A real doubling point
+//! needs a substantial advantage, because doubling gives the cube away and
+//! not doubling keeps the option to double later (market-loser logic).
+//!
+//! # The doubling window (threshold approximation of a live-cube model)
+//!
+//! The window is a **threshold approximation of a live-cube model**: instead
+//! of pricing cube ownership (Janowski `x ≈ 0.7`), it gates the dead-cube
+//! arithmetic with the classic money-game win-probability landmarks of a
+//! gammonless live cube. With `w = p.win` and `g = p.win_g` for the side on
+//! roll:
+//!
+//! * **Doubling point** [`DOUBLE_POINT`] `= 0.68`: an initial double is
+//!   recommended only when `w ≥ 0.68`. **Redoubling point**
+//!   [`REDOUBLE_POINT`] `= 0.70` when I own the cube (giving up ownership
+//!   costs more).
+//! * **Take point**: the opponent takes iff `DT < DP` — the dead-cube
+//!   arithmetic with gammons. Gammonless this is the taker's
+//!   `w ≥ 0.25` in a money game ([`MONEY_TAKE_POINT`]) and, in a match, the
+//!   win probability where taking equals dropping under the dead-cube model
+//!   (below), computed from the match equity table.
+//! * **Too good** ([`TOO_GOOD_WIN`], [`TOO_GOOD_GAMMON`]): with `w ≥ 0.85`
+//!   and `g ≥ 0.25` playing on for the gammon beats cashing, provided a
+//!   gammon is worth more than a single win at the current stake and the
+//!   opponent would pass the double (otherwise the double branch decides).
+//!   Independently, `ND > DP` is always too good: cubeless play-on is a
+//!   lower bound on the value of playing on while I control the cube.
+//!
+//! The same thresholds gate **match play**. The equities and the take point
+//! are converted through match equity by the MET helpers, so the take side
+//! is score-dependent; the doubling side is bounded below by the money
+//! landmarks: a double is never recommended below `w = 0.68` (`0.70`
+//! owning the cube), even at scores where the dead-cube arithmetic alone
+//! would double earlier (2-away/2-away, where the doubled cube is dead and
+//! the dead-cube arithmetic is exact, is the notable case). Within the
+//! window the dead-cube gain check still applies: a double must also
+//! satisfy `min(DT, DP) > ND`, which is what stops the post-Crawford leader
+//! or a 2-away cube owner from turning a cube that can only hurt.
 //!
 //! # Money-game races: Keith's window
 //!
@@ -33,29 +71,30 @@
 //! same counts as [`crate::race::keith_count`]): with `D` = the roller's
 //! bumped count minus the opponent's, double iff `D ≤ 4`, redouble iff
 //! `D ≤ 3`, and the opponent takes iff `D ≥ 2`. "Too good" still applies
-//! when playing on beats cashing. The three equities are still the
-//! dead-cube ones, reported for information; the action is Keith's. Keith's
-//! thresholds are money thresholds, so match-play races keep the MET model
-//! (a known approximation), and contact positions keep it everywhere.
+//! as above. The three equities are still the dead-cube ones, reported for
+//! information; the action is Keith's. Keith's thresholds are money
+//! thresholds, so match-play races use the doubling window above (a known
+//! approximation), as do contact positions everywhere.
 //!
-//! # Decision rules (dead-cube model)
+//! # Decision rules
 //!
 //! * The cube cannot be turned in the Crawford game or when the opponent
 //!   owns it ([`can_double`] is `false`): the action is always
 //!   [`CubeAction::NoDouble`].
-//! * Otherwise the opponent's reply to a double gives me `min(DT, DP)`. I
-//!   double iff that strictly beats `ND` (ties favour not doubling). If I
-//!   double, the opponent takes iff `DT < DP` (strictly; at exactly the take
-//!   point the analysis says drop).
-//! * If I do not double and `ND > DP` (playing on beats cashing), the
-//!   position is [`CubeAction::TooGood`].
-//! * "Redouble" variants are reported when I own the cube.
+//! * Otherwise, if the position is too good (above), the action is
+//!   [`CubeAction::TooGood`].
+//! * Otherwise I double iff `w` is at or above the doubling (redoubling)
+//!   point **and** the opponent's best reply, `min(DT, DP)`, strictly beats
+//!   `ND` (ties favour not doubling). If I double, the opponent takes iff
+//!   `DT < DP` (strictly; at exactly the take point the analysis says drop).
+//! * Otherwise [`CubeAction::NoDouble`], or [`CubeAction::NoRedouble`] when
+//!   I own the cube. "Redouble" variants are reported when I own the cube.
 //!
 //! [`CubeAnalysis::take_point`] is the classic *gammonless* take point: the
 //! taker's winning probability at which taking and dropping are equal under
-//! this model (money: `0.25`; match: `(W2 − W1) / (W2 − L2)` in MWC terms,
-//! where `W1` is my MWC after winning the current cube and `W2`/`L2` my MWC
-//! after winning/losing the doubled cube).
+//! the dead-cube model (money: `0.25`; match: `(W2 − W1) / (W2 − L2)` in
+//! MWC terms, where `W1` is my MWC after winning the current cube and
+//! `W2`/`L2` my MWC after winning/losing the doubled cube).
 
 use bg_core::Position;
 use serde::{Deserialize, Serialize};
@@ -66,8 +105,29 @@ use crate::{MatchContext, Probs, cubeless_mwc, equity_for, mwc_after};
 /// Equity of winning the current cube value (double/drop) on the current
 /// context's scale: the `+1` anchor of [`equity_for`].
 const DROP_EQUITY: f64 = 1.0;
-/// Gammonless dead-cube take point in a money game.
-const MONEY_TAKE_POINT: f64 = 0.25;
+/// Gammonless dead-cube take point in a money game: the taker takes with a
+/// winning probability of at least this (module docs).
+pub const MONEY_TAKE_POINT: f64 = 0.25;
+/// Doubling point: an initial double is recommended only when the doubler's
+/// cubeless winning probability is at least this (module docs).
+pub const DOUBLE_POINT: f64 = 0.68;
+/// Redoubling point: the doubling point when I already own the cube.
+pub const REDOUBLE_POINT: f64 = 0.70;
+/// "Too good" needs at least this winning probability ...
+pub const TOO_GOOD_WIN: f64 = 0.85;
+/// ... together with at least this gammon probability (module docs).
+pub const TOO_GOOD_GAMMON: f64 = 0.25;
+
+/// The three dead-cube equities a decision compares (module docs).
+#[derive(Debug, Clone, Copy)]
+struct Equities {
+    /// No double: play on at the current cube.
+    nd: f64,
+    /// Double/take: play on cubeless at the doubled cube.
+    dt: f64,
+    /// Double/drop: cash the current cube.
+    dp: f64,
+}
 
 /// Recommended cube action for the side on roll before rolling.
 ///
@@ -141,22 +201,31 @@ pub fn can_double(ctx: &MatchContext) -> bool {
     !ctx.crawford && ctx.cube_owner_is_me != Some(false)
 }
 
-/// The dead-cube analysis of `p` (probabilities for the side on roll, before
-/// rolling) in `ctx`; see the [module docs](self) for the model and rules.
+/// The analysis of `p` (probabilities for the side on roll, before rolling)
+/// in `ctx`: the dead-cube equities and the windowed action; see the
+/// [module docs](self) for the model and rules.
 #[must_use]
 pub fn cube_analysis(ctx: &MatchContext, p: &Probs) -> CubeAnalysis {
     let p = p.clamp();
-    let nd = equity_for(ctx, &p);
-    let dt = double_take_equity(*ctx, &p);
-    let dp = DROP_EQUITY;
+    let e = Equities {
+        nd: equity_for(ctx, &p),
+        dt: double_take_equity(*ctx, &p),
+        dp: DROP_EQUITY,
+    };
     let can_double = can_double(ctx);
-    let action = decide(can_double, ctx.cube_owner_is_me == Some(true), nd, dt, dp);
+    let action = decide(
+        can_double,
+        ctx.cube_owner_is_me == Some(true),
+        gammons_matter(*ctx),
+        &p,
+        e,
+    );
     CubeAnalysis {
         action,
         can_double,
-        equity_no_double: nd,
-        equity_double_take: dt,
-        equity_double_drop: dp,
+        equity_no_double: e.nd,
+        equity_double_take: e.dt,
+        equity_double_drop: e.dp,
         take_point: take_point(*ctx),
     }
 }
@@ -172,7 +241,7 @@ pub fn cube_analysis_for(ctx: &MatchContext, pos: &Position, p: &Probs) -> CubeA
     let action = decide_race(
         analysis.can_double,
         ctx.cube_owner_is_me == Some(true),
-        analysis.equity_no_double > analysis.equity_double_drop,
+        analysis.action == CubeAction::TooGood,
         keith_lead(pos),
     );
     CubeAnalysis { action, ..analysis }
@@ -248,28 +317,51 @@ pub fn cube_error(analysis: &CubeAnalysis, choice: CubeChoice) -> f64 {
     }
 }
 
-/// The action for the three equities, per the rules in the module docs.
-fn decide(can_double: bool, i_own_cube: bool, nd: f64, dt: f64, dp: f64) -> CubeAction {
+/// The action for the (clamped) probabilities `p` and the three equities,
+/// per the decision rules in the module docs. `gammons_matter` is
+/// [`gammons_matter`] of the context.
+fn decide(
+    can_double: bool,
+    i_own_cube: bool,
+    gammons_matter: bool,
+    p: &Probs,
+    e: Equities,
+) -> CubeAction {
     if !can_double {
         return CubeAction::NoDouble;
     }
-    let if_doubled = dt.min(dp);
-    if if_doubled > nd {
-        let taken = dt < dp;
-        return match (i_own_cube, taken) {
-            (false, true) => CubeAction::DoubleTake,
-            (false, false) => CubeAction::DoubleDrop,
-            (true, true) => CubeAction::RedoubleTake,
-            (true, false) => CubeAction::RedoubleDrop,
-        };
+    let opponent_passes = e.dt >= e.dp;
+    let too_good_for_gammon =
+        p.win >= TOO_GOOD_WIN && p.win_g >= TOO_GOOD_GAMMON && gammons_matter && opponent_passes;
+    if e.nd > e.dp || too_good_for_gammon {
+        return CubeAction::TooGood;
     }
-    if nd > dp {
-        CubeAction::TooGood
-    } else if i_own_cube {
-        CubeAction::NoRedouble
+    let doubling_point = if i_own_cube {
+        REDOUBLE_POINT
     } else {
-        CubeAction::NoDouble
+        DOUBLE_POINT
+    };
+    let in_window = p.win >= doubling_point && e.dt.min(e.dp) > e.nd;
+    match (in_window, i_own_cube, opponent_passes) {
+        (false, false, _) => CubeAction::NoDouble,
+        (false, true, _) => CubeAction::NoRedouble,
+        (true, false, false) => CubeAction::DoubleTake,
+        (true, false, true) => CubeAction::DoubleDrop,
+        (true, true, false) => CubeAction::RedoubleTake,
+        (true, true, true) => CubeAction::RedoubleDrop,
     }
+}
+
+/// `true` when a gammon at the current stake is worth more to me than a
+/// single win: always in a money game; in a match, when winning twice the
+/// stake improves my MWC over winning it once (it does not when a single
+/// win already wins the match).
+fn gammons_matter(ctx: MatchContext) -> bool {
+    if ctx.is_money() {
+        return true;
+    }
+    let stake = ctx.cube.max(1);
+    mwc_after(&ctx, true, stake.saturating_mul(2)) > mwc_after(&ctx, true, stake)
 }
 
 /// `DT`: the game played cubeless at the doubled cube, on the current scale.
@@ -326,20 +418,95 @@ fn take_point(ctx: MatchContext) -> f64 {
 mod tests {
     use super::*;
 
+    /// Gammonless money equities for the roller's win probability `w`.
+    fn money(w: f64) -> (Probs, Equities) {
+        let p = Probs {
+            win: w,
+            ..Probs::default()
+        };
+        let e = Equities {
+            nd: 2.0 * w - 1.0,
+            dt: 4.0 * w - 2.0,
+            dp: 1.0,
+        };
+        (p, e)
+    }
+
+    fn money_decide(i_own_cube: bool, w: f64) -> CubeAction {
+        let (p, e) = money(w);
+        decide(true, i_own_cube, true, &p, e)
+    }
+
     #[test]
     fn decide_is_total_and_follows_the_rules() {
-        assert_eq!(decide(false, false, 5.0, 5.0, 1.0), CubeAction::NoDouble);
-        assert_eq!(decide(false, true, 5.0, 5.0, 1.0), CubeAction::NoDouble);
-        assert_eq!(decide(true, false, 0.3, 0.6, 1.0), CubeAction::DoubleTake);
-        assert_eq!(decide(true, false, 0.6, 1.2, 1.0), CubeAction::DoubleDrop);
-        assert_eq!(decide(true, false, 0.6, 1.0, 1.0), CubeAction::DoubleDrop);
-        assert_eq!(decide(true, false, 1.5, 3.0, 1.0), CubeAction::TooGood);
-        assert_eq!(decide(true, false, -0.2, -0.4, 1.0), CubeAction::NoDouble);
-        assert_eq!(decide(true, false, 0.0, 0.0, 1.0), CubeAction::NoDouble);
-        assert_eq!(decide(true, true, 0.3, 0.6, 1.0), CubeAction::RedoubleTake);
-        assert_eq!(decide(true, true, 0.6, 1.2, 1.0), CubeAction::RedoubleDrop);
-        assert_eq!(decide(true, true, -0.2, -0.4, 1.0), CubeAction::NoRedouble);
-        assert_eq!(decide(true, true, 1.5, 3.0, 1.0), CubeAction::TooGood);
+        let (p, e) = money(0.9);
+        assert_eq!(decide(false, false, true, &p, e), CubeAction::NoDouble);
+        assert_eq!(decide(false, true, true, &p, e), CubeAction::NoDouble);
+        // Below the doubling window the arithmetic alone does not double.
+        assert_eq!(money_decide(false, 0.51), CubeAction::NoDouble);
+        assert_eq!(money_decide(false, 0.65), CubeAction::NoDouble);
+        assert_eq!(money_decide(true, 0.69), CubeAction::NoRedouble);
+        // Inside it: take below the cash point, drop at and above it.
+        assert_eq!(money_decide(false, 0.68), CubeAction::DoubleTake);
+        assert_eq!(money_decide(false, 0.74), CubeAction::DoubleTake);
+        assert_eq!(money_decide(false, 0.75), CubeAction::DoubleDrop);
+        assert_eq!(money_decide(false, 0.80), CubeAction::DoubleDrop);
+        assert_eq!(money_decide(true, 0.70), CubeAction::RedoubleTake);
+        assert_eq!(money_decide(true, 0.80), CubeAction::RedoubleDrop);
+        assert_eq!(money_decide(false, 0.45), CubeAction::NoDouble);
+        assert_eq!(money_decide(false, 0.5), CubeAction::NoDouble);
+        assert_eq!(money_decide(true, 0.40), CubeAction::NoRedouble);
+        // Gammonless there is no "too good": a near-certain win is a cash
+        // (at exactly w = 1 cashing and playing on tie, and ties do not
+        // double).
+        assert_eq!(money_decide(false, 0.99), CubeAction::DoubleDrop);
+        assert_eq!(money_decide(false, 1.0), CubeAction::NoDouble);
+    }
+
+    #[test]
+    fn decide_too_good_by_threshold_by_arithmetic_and_its_guards() {
+        // Threshold (0.85 / 0.25) with cubeless equity 0.95 < DP.
+        let p = Probs {
+            win: 0.85,
+            win_g: 0.25,
+            ..Probs::default()
+        };
+        let e = Equities {
+            nd: 0.95,
+            dt: 1.9,
+            dp: 1.0,
+        };
+        assert_eq!(decide(true, false, true, &p, e), CubeAction::TooGood);
+        assert_eq!(decide(true, true, true, &p, e), CubeAction::TooGood);
+        // Just short of either threshold: cash.
+        let short_win = Probs { win: 0.84, ..p };
+        assert_eq!(
+            decide(true, false, true, &short_win, e),
+            CubeAction::DoubleDrop
+        );
+        let short_gammon = Probs { win_g: 0.24, ..p };
+        assert_eq!(
+            decide(true, false, true, &short_gammon, e),
+            CubeAction::DoubleDrop
+        );
+        // Gammons worth nothing at this score: cash.
+        assert_eq!(decide(true, false, false, &p, e), CubeAction::DoubleDrop);
+        // The opponent would take: the double branch decides.
+        let taken = Equities { dt: 0.98, ..e };
+        assert_eq!(decide(true, false, true, &p, taken), CubeAction::DoubleTake);
+        // Arithmetic: playing on cubeless already beats cashing.
+        let big = Probs {
+            win: 0.84,
+            win_g: 0.4,
+            ..Probs::default()
+        };
+        let e = Equities {
+            nd: 1.08,
+            dt: 2.16,
+            dp: 1.0,
+        };
+        assert_eq!(decide(true, false, true, &big, e), CubeAction::TooGood);
+        assert_eq!(decide(true, false, false, &big, e), CubeAction::TooGood);
     }
 
     #[test]
