@@ -62,7 +62,8 @@ impl Bot {
 
     /// Cube decision for the side on roll before rolling
     /// ([`cube_analysis_for`] of the static evaluation of `pos`: Keith's
-    /// race window in a money-game race, the dead-cube MET model otherwise).
+    /// race window in a money-game race, the doubling window on the
+    /// dead-cube MET model otherwise).
     #[must_use]
     pub fn cube_action(&self, ctx: &MatchContext, pos: &Position) -> CubeAnalysis {
         cube_analysis_for(ctx, pos, &self.evaluator.evaluate(pos).clamp())

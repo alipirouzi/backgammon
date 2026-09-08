@@ -1,10 +1,12 @@
-//! Cube decisions (dead-cube MET model), analysis categories and the `Bot`
-//! facade: thresholds, categorisation, serde shapes, cube actions on pure
-//! probabilities and on club-evaluated positions, and play analysis.
+//! Cube decisions (doubling window on the dead-cube MET model), analysis
+//! categories and the `Bot` facade: thresholds, categorisation, serde
+//! shapes, cube actions on pure probabilities and on club-evaluated
+//! positions, and play analysis.
 
 use bg_bot::analysis::{Category, MoveAnalysis, categorize, thresholds};
 use bg_bot::cube::{
-    CubeAction, CubeAnalysis, CubeChoice, can_double, cube_analysis, cube_analysis_for, cube_error,
+    CubeAction, CubeAnalysis, CubeChoice, DOUBLE_POINT, MONEY_TAKE_POINT, REDOUBLE_POINT,
+    TOO_GOOD_GAMMON, TOO_GOOD_WIN, can_double, cube_analysis, cube_analysis_for, cube_error,
 };
 use bg_bot::race::keith_lead;
 use bg_bot::search::ranking_gap;
@@ -195,14 +197,36 @@ fn cube_action_and_choice_serialise_camel_case() {
 // ---------------------------------------------------------------------------
 
 #[test]
+fn doubling_window_landmarks() {
+    assert!((DOUBLE_POINT - 0.68).abs() < TOL);
+    assert!((REDOUBLE_POINT - 0.70).abs() < TOL);
+    assert!((MONEY_TAKE_POINT - 0.25).abs() < TOL);
+    assert!((TOO_GOOD_WIN - 0.85).abs() < TOL);
+    assert!((TOO_GOOD_GAMMON - 0.25).abs() < TOL);
+}
+
+#[test]
 fn money_double_take_window() {
-    let a = cube_analysis(&money(), &win_only(0.65));
+    // Fixture moved from w = 0.65 to 0.70: doubling at 0.65 was the bug the
+    // window fixes (the dead-cube arithmetic doubles any w > 0.5).
+    let a = cube_analysis(&money(), &win_only(0.70));
     assert_eq!(a.action, CubeAction::DoubleTake);
     assert!(a.can_double);
-    assert!((a.equity_no_double - 0.3).abs() < TOL);
-    assert!((a.equity_double_take - 0.6).abs() < TOL);
+    assert!((a.equity_no_double - 0.4).abs() < TOL);
+    assert!((a.equity_double_take - 0.8).abs() < TOL);
     assert!((a.equity_double_drop - 1.0).abs() < TOL);
     assert!((a.take_point - 0.25).abs() < TOL);
+    // At the doubling point itself, and just below it.
+    assert_eq!(
+        cube_analysis(&money(), &win_only(0.68)).action,
+        CubeAction::DoubleTake
+    );
+    let below = cube_analysis(&money(), &win_only(0.65));
+    assert_eq!(below.action, CubeAction::NoDouble);
+    assert!(
+        below.equity_double_take > below.equity_no_double,
+        "the arithmetic alone would double: {below:?}"
+    );
 }
 
 #[test]
@@ -251,9 +275,16 @@ fn owned_cube_gives_redouble_variants() {
         cube_owner_is_me: Some(true),
         ..money()
     };
+    // Fixture moved from w = 0.65 to 0.72: redoubling at 0.65 was the bug
+    // the window fixes. The redoubling point is 0.70, above the 0.68
+    // initial doubling point.
     assert_eq!(
-        cube_analysis(&owned, &win_only(0.65)).action,
+        cube_analysis(&owned, &win_only(0.72)).action,
         CubeAction::RedoubleTake
+    );
+    assert_eq!(
+        cube_analysis(&owned, &win_only(0.69)).action,
+        CubeAction::NoRedouble
     );
     assert_eq!(
         cube_analysis(&owned, &win_only(0.85)).action,
@@ -263,6 +294,120 @@ fn owned_cube_gives_redouble_variants() {
         cube_analysis(&owned, &win_only(0.40)).action,
         CubeAction::NoRedouble
     );
+}
+
+// ---------------------------------------------------------------------------
+// The doubling window
+// ---------------------------------------------------------------------------
+
+fn opening() -> Position {
+    Position::from_board(&bg_core::Board::opening(), bg_core::Player::White)
+}
+
+#[test]
+fn opening_position_is_no_double_in_money_and_match() {
+    // Regression: with ND = E and DT = 2E the dead-cube arithmetic doubled
+    // the opening position (E ≈ 0.02). The window requires w ≥ 0.68.
+    let bot = Bot::new(Level::Club);
+    let p = bot.evaluator.evaluate(&opening()).clamp();
+    assert!(
+        p.win > 0.5 && p.win < 0.6,
+        "fixture is a near-even opening: {p:?}"
+    );
+    for ctx in [
+        money(),
+        MatchContext {
+            length: 7,
+            my_away: 7,
+            their_away: 7,
+            ..money()
+        },
+        MatchContext {
+            length: 7,
+            my_away: 3,
+            their_away: 5,
+            ..money()
+        },
+        two_away_two_away(),
+    ] {
+        let a = bot.cube_action(&ctx, &opening());
+        assert_eq!(a.action, CubeAction::NoDouble, "{ctx:?}: {a:?}");
+        assert!(a.can_double);
+        assert!(a.equity_no_double > 0.0);
+        if ctx.is_money() {
+            // The reported bug: ND ≈ 0.02, DT ≈ 0.04, action doubleTake.
+            assert!(
+                a.equity_double_take > a.equity_no_double,
+                "the arithmetic alone would double: {a:?}"
+            );
+        }
+        // Grading follows the recommendation.
+        let (_, err, cat) = bot.analyze_cube(&ctx, &opening(), CubeChoice::NoDouble);
+        assert!(err.abs() < TOL);
+        assert_eq!(cat, Category::Best);
+        let (_, err, _) = bot.analyze_cube(&ctx, &opening(), CubeChoice::Double);
+        assert!(err > 0.0);
+    }
+    let owned = MatchContext {
+        cube: 2,
+        cube_owner_is_me: Some(true),
+        ..money()
+    };
+    assert_eq!(
+        bot.cube_action(&owned, &opening()).action,
+        CubeAction::NoRedouble
+    );
+}
+
+#[test]
+fn money_too_good_by_the_gammon_threshold_below_the_arithmetic_line() {
+    // w = 0.85, g = 0.25: cubeless equity 0.95 < DP, so the arithmetic
+    // alone would cash; the threshold says play on for the gammon.
+    let p = Probs {
+        win: 0.85,
+        win_g: 0.25,
+        ..Probs::default()
+    };
+    let a = cube_analysis(&money(), &p);
+    assert_eq!(a.action, CubeAction::TooGood, "{a:?}");
+    assert!(a.equity_no_double < a.equity_double_drop);
+    // Just short of either threshold it is a cash.
+    let short_gammon = Probs { win_g: 0.24, ..p };
+    assert_eq!(
+        cube_analysis(&money(), &short_gammon).action,
+        CubeAction::DoubleDrop
+    );
+    let short_win = Probs { win: 0.84, ..p };
+    assert_eq!(
+        cube_analysis(&money(), &short_win).action,
+        CubeAction::DoubleDrop
+    );
+}
+
+#[test]
+fn match_two_away_cube_owner_does_not_play_on_for_a_worthless_gammon() {
+    // I am 2-away holding a 2-cube: a single win already wins the match, so
+    // the gammon threshold does not apply. Redoubling to 4 lets the
+    // opponent (4-away) take for the match, so the arithmetic says do not
+    // redouble either.
+    let ctx = MatchContext {
+        length: 5,
+        my_away: 2,
+        their_away: 4,
+        crawford: false,
+        post_crawford: false,
+        cube: 2,
+        cube_owner_is_me: Some(true),
+    };
+    let p = Probs {
+        win: 0.9,
+        win_g: 0.4,
+        ..Probs::default()
+    };
+    let a = cube_analysis(&ctx, &p);
+    assert_eq!(a.action, CubeAction::NoRedouble, "{a:?}");
+    assert!(a.equity_double_take < a.equity_no_double);
+    assert!(a.take_point.abs() < TOL, "{}", a.take_point);
 }
 
 #[test]
@@ -318,8 +463,16 @@ fn match_double_take_equity_is_on_the_current_cube_scale() {
     let expected = 2.0 * (w - l1) / (w1 - l1) - 1.0;
     assert!((a.equity_double_take - expected).abs() < TOL);
     assert!((a.equity_double_drop - 1.0).abs() < TOL);
-    // Below the take point the opponent takes; the double is correct.
-    assert_eq!(a.action, CubeAction::DoubleTake);
+    // The arithmetic would double (the doubled cube is dead at this score,
+    // so it is exact here), but the doubling window never recommends a
+    // double below w = 0.68. This fixture changed from DoubleTake as a
+    // consequence of that floor, not because doubling here was wrong.
+    assert!(a.equity_double_take > a.equity_no_double);
+    assert_eq!(a.action, CubeAction::NoDouble);
+    // The cash point at this score, 1 − met(2, 1) ≈ 0.677, lies below the
+    // window: inside it every double is a drop.
+    let a = cube_analysis(&ctx, &win_only(0.70));
+    assert_eq!(a.action, CubeAction::DoubleDrop, "{a:?}");
 }
 
 #[test]
@@ -346,11 +499,12 @@ fn match_leader_at_post_crawford_never_doubles() {
 
 #[test]
 fn cube_error_per_choice_in_the_take_window() {
-    let a = cube_analysis(&money(), &win_only(0.65)); // ND .3, DT .6, DP 1
-    assert!((cube_error(&a, CubeChoice::NoDouble) - 0.3).abs() < TOL);
+    // Fixture moved from w = 0.65 (outside the doubling window) to 0.70.
+    let a = cube_analysis(&money(), &win_only(0.70)); // ND .4, DT .8, DP 1
+    assert!((cube_error(&a, CubeChoice::NoDouble) - 0.4).abs() < TOL);
     assert!(cube_error(&a, CubeChoice::Double).abs() < TOL);
     assert!(cube_error(&a, CubeChoice::Take).abs() < TOL);
-    assert!((cube_error(&a, CubeChoice::Drop) - 0.4).abs() < TOL);
+    assert!((cube_error(&a, CubeChoice::Drop) - 0.2).abs() < TOL);
 }
 
 #[test]
@@ -382,7 +536,7 @@ fn cube_error_is_zero_when_the_cube_cannot_be_turned() {
 
 #[test]
 fn cube_analysis_serialises_the_plan_shape() {
-    let a = cube_analysis(&money(), &win_only(0.65));
+    let a = cube_analysis(&money(), &win_only(0.70));
     let json = serde_json::to_value(a).expect("serialise");
     let obj = json.as_object().expect("object");
     let mut keys: Vec<&str> = obj.keys().map(String::as_str).collect();
@@ -476,7 +630,7 @@ fn bot_race_keith_thresholds_double_redouble_and_take() {
 #[test]
 fn keith_gate_applies_only_to_money_game_races() {
     let bot = Bot::new(Level::Club);
-    // Match play keeps the dead-cube MET model even in a race.
+    // Match play keeps the windowed dead-cube MET model even in a race.
     let ctx = MatchContext {
         length: 7,
         my_away: 3,
