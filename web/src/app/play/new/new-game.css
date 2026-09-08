@@ -1,0 +1,261 @@
+/* /play/new: an editorial two-column set-up sheet — options left, the live
+   board preview right — sharing the landing's CTA styles (landing.css is
+   loaded by the landing route only, so the CTA rules are repeated here). */
+
+.new-game {
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --display-weight: 400;
+  --display-tracking: -0.02em;
+  --rule: color-mix(in oklab, var(--ui-fg) 14%, transparent);
+  --rule-strong: color-mix(in oklab, var(--ui-fg) 28%, transparent);
+  --muted: var(--ui-muted);
+  --panel: color-mix(in oklab, var(--ui-fg) 4%, transparent);
+  --cta-bg: var(--ui-cta-bg);
+  --cta-fg: var(--ui-cta-fg);
+  --cta-radius: calc(var(--radius-board) / 2 + 2px);
+  --table-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.7), 0 12px 24px -12px rgb(0 0 0 / 0.5);
+  --page-x: clamp(1.25rem, 4vw, 4rem);
+
+  min-height: calc(100svh - 3.5rem);
+  background: var(--ui-bg);
+  color: var(--ui-fg);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="broadcast"] .new-game {
+  --display-weight: 700;
+  --display-tracking: -0.04em;
+}
+[data-theme="editorial"] .new-game {
+  --table-shadow: 0 30px 60px -30px rgb(35 32 30 / 0.35), 0 8px 20px -12px rgb(35 32 30 / 0.25);
+}
+
+.new-game__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "preview"
+    "options";
+  gap: var(--space-6) clamp(2rem, 5vw, 6rem);
+  max-width: 96rem;
+  margin-inline: auto;
+  padding: var(--space-6) var(--page-x) var(--space-8);
+}
+@media (min-width: 60rem) {
+  .new-game__form {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-areas:
+      "head head"
+      "options preview";
+    align-items: start;
+  }
+}
+
+.new-game__head {
+  grid-area: head;
+  display: grid;
+  gap: var(--space-2);
+}
+.new-game__eyebrow {
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+}
+.new-game__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-hero);
+  line-height: 0.95;
+  letter-spacing: var(--display-tracking);
+}
+.new-game__lede {
+  margin: var(--space-2) 0 0;
+  max-width: 44ch;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.35;
+  color: color-mix(in oklab, var(--ui-fg) 84%, transparent);
+}
+
+/* Options --------------------------------------------------------------- */
+
+.new-game__options {
+  grid-area: options;
+  display: grid;
+  gap: var(--space-6);
+}
+.option-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.option-group__legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.option-group__choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-2);
+}
+
+/* Each choice is a card-shaped radio; the native input stays focusable but invisible. */
+.choice {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--cta-radius);
+  background: var(--panel);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+.choice:hover {
+  transform: translateY(-1px);
+  border-color: var(--rule-strong);
+}
+.choice[data-checked="true"] {
+  border-color: var(--ui-accent);
+  background: color-mix(in oklab, var(--ui-accent) 10%, transparent);
+}
+.choice:has(.choice__input:focus-visible) {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+.choice__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.choice__label {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking);
+}
+.choice__note {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.new-game__submit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.new-game__seed {
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Preview ---------------------------------------------------------------- */
+
+.new-game__preview {
+  grid-area: preview;
+  display: grid;
+  /* An explicit shrinkable track: an implicit `auto` track would grow to the caption's switch and push the board past the viewport on phones. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: var(--space-3);
+  margin: 0;
+}
+/* Narrow: the caption already names the theme, so the switch shows swatches only (each option keeps its aria-label). */
+@media (max-width: 40rem) {
+  .new-game .theme-switch__name { display: none; }
+  .new-game .theme-switch__option { padding: 0 0.45rem; }
+}
+.new-game__board {
+  border-radius: var(--radius-board);
+  box-shadow: var(--table-shadow);
+}
+.new-game__preview-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: 0 var(--space-1);
+}
+.new-game__theme-name {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-lg);
+  letter-spacing: var(--display-tracking);
+}
+
+/* CTA (same design as landing.css) -------------------------------------- */
+
+.new-game .cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  min-height: 3.25rem;
+  padding: 0 1.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--cta-radius);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    box-shadow var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
+}
+.new-game .cta:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+.new-game .cta--primary {
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 10px 24px -14px var(--ui-accent);
+}
+.new-game .cta--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 16px 30px -14px var(--ui-accent);
+}
+.new-game .cta--primary:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+.new-game .cta:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .new-game *,
+  .new-game *::before,
+  .new-game *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
