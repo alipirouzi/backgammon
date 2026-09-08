@@ -1,0 +1,190 @@
+/* Board component styles. Geometry lives in the SVG viewBox; this file only
+   paints materials from theme tokens and positions the HTML hit layer with
+   physical left/top so the board never mirrors under `dir="rtl"`. */
+
+.board {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1000 / 700;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  container-type: inline-size;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.board__svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Materials */
+.board__frame { fill: var(--board-frame); rx: var(--radius-board); }
+.board__frame-highlight { stroke: var(--board-frame-highlight); stroke-width: 1.5; }
+.board__felt { fill: var(--board-felt); }
+.board__bar { fill: var(--board-bar); }
+.board__vignette { mix-blend-mode: multiply; }
+.board__midline { stroke: rgb(0 0 0 / 0.16); stroke-width: 1; }
+
+.board__triangle { stroke: rgb(0 0 0 / 0.22); stroke-width: 1; stroke-linejoin: round; transition: opacity var(--duration-fast) ease; }
+.board__point[data-parity="a"] .board__triangle { fill: var(--point-a); }
+.board__point[data-parity="b"] .board__triangle { fill: var(--point-b); }
+
+/* SVG text sizes are user units (viewBox 1000 wide), so they scale with the
+   board: 17u is ~14px at 842px and ~12px at 700px; below a 35rem-wide board
+   the numerals would be under 9px, so they are dropped there. */
+.board__label {
+  fill: var(--board-label);
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+}
+@container (max-width: 35rem) {
+  .board__label { display: none; }
+}
+
+/* Checkers */
+.checker { filter: drop-shadow(var(--shadow-checker)); }
+.checker__body {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+.checker[data-player="white"] .checker__base { fill: var(--checker-white); }
+.checker[data-player="white"] .checker__edge { stroke: var(--checker-white-edge); stroke-width: 2; }
+.checker[data-player="white"] .checker__ring { stroke: var(--checker-white-edge); stroke-width: 1; opacity: 0.55; }
+.checker[data-player="black"] .checker__base { fill: var(--checker-black); }
+.checker[data-player="black"] .checker__edge { stroke: var(--checker-black-edge); stroke-width: 2; }
+.checker[data-player="black"] .checker__ring { stroke: var(--checker-black-edge); stroke-width: 1; opacity: 0.7; }
+.checker__highlight { fill: #fff; opacity: 0.16; }
+.checker[data-player="black"] .checker__highlight { opacity: 0.1; }
+/* Hit checkers sit on the bar, where a theme's edge token may not separate the disc from the wood (heritage black, editorial white); the bar-edge tokens keep that ring >= 3:1. */
+.board__bar-checkers .checker[data-player="white"] .checker__edge { stroke: var(--checker-white-bar-edge, var(--checker-white-edge)); stroke-width: 3; }
+.board__bar-checkers .checker[data-player="black"] .checker__edge { stroke: var(--checker-black-bar-edge, var(--checker-black-edge)); stroke-width: 3; }
+.checker[data-selected="true"] { filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.45)); }
+.checker[data-selected="true"] .checker__body { transform: translateY(-8px) scale(1.06); }
+
+/* Stack badge beyond five */
+.stack-badge circle { fill: var(--ui-accent); stroke: rgb(0 0 0 / 0.35); stroke-width: 1; }
+.stack-badge text {
+  fill: var(--ui-bg);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+/* Legal-destination ring */
+.board__target {
+  fill: color-mix(in oklab, var(--ui-accent) 22%, transparent);
+  stroke: var(--ui-accent);
+  stroke-width: 3;
+  stroke-dasharray: 6 5;
+  animation: board-target-pulse 1.6s var(--ease-in-out) infinite;
+}
+@keyframes board-target-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* Dice */
+.die__face { fill: var(--die-face); stroke: rgb(0 0 0 / 0.35); stroke-width: 1; }
+.die { filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.45)); }
+.die__gloss { fill: #fff; opacity: 0.22; }
+.die__pip { fill: var(--die-pip); }
+
+/* Cube */
+.cube { filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.4)); }
+.cube__face { fill: var(--cube-face); stroke: rgb(0 0 0 / 0.3); stroke-width: 1; }
+.cube__bevel { stroke: #fff; stroke-opacity: 0.25; stroke-width: 1; }
+.cube__text {
+  fill: var(--cube-text);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  text-anchor: middle;
+  letter-spacing: -0.02em;
+}
+
+/* Off trays */
+.tray__well { fill: rgb(0 0 0 / 0.22); stroke: var(--board-frame-highlight); stroke-width: 1; }
+.tray__target { stroke: var(--ui-accent); stroke-width: 2.5; stroke-dasharray: 6 5; animation: board-target-pulse 1.6s var(--ease-in-out) infinite; }
+.tray[data-player="white"] .tray__slab { fill: var(--checker-white); stroke: var(--checker-white-edge); stroke-width: 1; }
+.tray[data-player="black"] .tray__slab { fill: var(--checker-black); stroke: var(--checker-black-edge); stroke-width: 1; }
+.tray__count {
+  fill: var(--ui-fg);
+  opacity: 0.85;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+[data-theme="editorial"] .tray__well { fill: rgb(35 32 30 / 0.06); }
+[data-theme="editorial"] .tray__count { fill: var(--ui-fg); }
+
+/* Hit layer: transparent buttons over each point, the bar and the trays. */
+.board__hits {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.board__hit {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  appearance: none;
+  cursor: default;
+  outline-offset: -3px;
+}
+.board__hit[data-occupant],
+.board__hit[data-legal="true"],
+.board__hit--bar,
+.board__hit--off { cursor: pointer; }
+/* Hover tint (::before) and selection/pending ring (::after) are fixed-colour
+   layers faded with opacity, so the hit layer, like the rest of the board,
+   animates only transform/opacity. */
+.board__hit::before,
+.board__hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) ease;
+}
+.board__hit::before { background: var(--ui-fg); }
+.board__hit[data-legal="true"]::before { background: var(--ui-accent); }
+.board__hit:hover::before { opacity: 0.06; }
+.board__hit[data-legal="true"]:hover::before { opacity: 0.2; }
+.board__hit[data-legal="true"]:active::before { opacity: 0.32; }
+.board__hit::after { box-shadow: inset 0 0 0 2px var(--ui-accent); }
+.board__hit[data-selected="true"]::after { opacity: 0.7; }
+.board__hit[data-pending="true"]::after {
+  box-shadow: inset 0 0 0 2px var(--ui-fg);
+  opacity: 0.35;
+}
+.board__hit:focus-visible { outline: 3px solid var(--ui-accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .board *,
+  .board *::before,
+  .board *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

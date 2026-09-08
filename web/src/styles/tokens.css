@@ -1,0 +1,35 @@
+/* Theme-independent design tokens: spacing, type scale, motion.
+   Palette and board materials live in themes.css. */
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+  --space-section: clamp(3rem, 2rem + 4vw, 7rem);
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: clamp(1rem, 0.94rem + 0.3vw, 1.125rem);
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --text-2xl: clamp(2rem, 1.4rem + 2.4vw, 3.25rem);
+  --text-hero: clamp(2.75rem, 1.5rem + 5vw, 6rem);
+
+  --leading-tight: 1.1;
+  --leading-normal: 1.5;
+  --tracking-caps: 0.18em;
+
+  --duration-fast: 140ms;
+  --duration-normal: 280ms;
+  --duration-slow: 480ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+}

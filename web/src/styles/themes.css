@@ -1,0 +1,112 @@
+/* Board themes as CSS custom property sets, selected by [data-theme] on <html>.
+   Heritage is the default and is also applied to bare :root so the board
+   renders correctly before any theme attribute is set.
+
+   Palette mapping from the plan (docs/superpowers/plans/2026-09-07-play.md):
+     heritage   frame #2d1a0f / bar #4a2c1a, felt #1f3a2e, points #c9a86a / #7a1f2b,
+                checkers #fbf3e0 / #0f0a08, accent #d9b75a
+     broadcast  frame #12141a, felt #22262e, points #3a4150 / #2c313c,
+                checkers #f2f4f7 / #141821, accent #f5c542
+     editorial  frame #efe6d6, felt #f7f1e6, points #a9b7a2 / #c98b6a,
+                checkers #fffdf8 / #23201e, accent #b86a45
+   Edge, die, cube and UI colours are derived from those anchors.
+
+   Text-contrast tokens (WCAG AA at the page's small type): --ui-muted is the
+   secondary text colour on --ui-bg and the 4 %/8 % panels; --ui-accent-text is
+   the accent as *text* (Editorial's terracotta is 3.8:1 on linen, so it darkens
+   there); --ui-cta-bg/--ui-cta-fg pair the primary call to action. Bar-edge
+   tokens give a hit checker a ring that separates from the bar (>= 3:1). */
+
+:root,
+[data-theme="heritage"] {
+  --board-frame: #2d1a0f;
+  --board-felt: #1f3a2e;
+  --board-bar: #4a2c1a;
+  --point-a: #c9a86a;
+  --point-b: #7a1f2b;
+  --checker-white: #fbf3e0;
+  --checker-white-edge: #c9b98f;
+  --checker-black: #0f0a08;
+  --checker-black-edge: #4a3a2a;
+  --die-face: #f6ecd6;
+  --die-pip: #1a110c;
+  --cube-face: #f0e2bd;
+  --cube-text: #2d1a0f;
+  --ui-bg: #15100c;
+  --ui-fg: #efe4cf;
+  --ui-accent: #d9b75a;
+  --ui-muted: color-mix(in oklab, var(--ui-fg) 62%, transparent);
+  --ui-accent-text: var(--ui-accent);
+  --ui-cta-bg: var(--ui-accent);
+  --ui-cta-fg: var(--ui-bg);
+  --checker-white-bar-edge: var(--checker-white-edge);
+  --checker-black-bar-edge: #c9b98f;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --radius-board: 18px;
+  --shadow-checker: 0 2px 3px rgb(0 0 0 / 0.5);
+  --board-frame-highlight: rgb(255 226 180 / 0.18);
+  --board-label: rgb(239 228 207 / 0.55);
+  color-scheme: dark;
+}
+
+[data-theme="broadcast"] {
+  --board-frame: #12141a;
+  --board-felt: #22262e;
+  --board-bar: #1a1d24;
+  --point-a: #3a4150;
+  --point-b: #2c313c;
+  --checker-white: #f2f4f7;
+  --checker-white-edge: #b8bfcc;
+  --checker-black: #141821;
+  --checker-black-edge: #6f7a90;
+  --die-face: #f7f8fa;
+  --die-pip: #12141a;
+  --cube-face: #f5c542;
+  --cube-text: #12141a;
+  --ui-bg: #0b0d11;
+  --ui-fg: #e8eaf0;
+  --ui-accent: #f5c542;
+  --ui-muted: color-mix(in oklab, var(--ui-fg) 62%, transparent);
+  --ui-accent-text: var(--ui-accent);
+  --ui-cta-bg: var(--ui-accent);
+  --ui-cta-fg: var(--ui-bg);
+  --checker-white-bar-edge: var(--checker-white-edge);
+  --checker-black-bar-edge: var(--checker-black-edge);
+  --font-display: "Helvetica Neue", "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --radius-board: 8px;
+  --shadow-checker: 0 1px 2px rgb(0 0 0 / 0.55);
+  --board-frame-highlight: rgb(255 255 255 / 0.08);
+  --board-label: rgb(232 234 240 / 0.5);
+  color-scheme: dark;
+}
+
+[data-theme="editorial"] {
+  --board-frame: #efe6d6;
+  --board-felt: #f7f1e6;
+  --board-bar: #e3d8c3;
+  --point-a: #a9b7a2;
+  --point-b: #c98b6a;
+  --checker-white: #fffdf8;
+  --checker-white-edge: #cfc4b2;
+  --checker-black: #23201e;
+  --checker-black-edge: #5a5350;
+  --die-face: #fffdf8;
+  --die-pip: #23201e;
+  --cube-face: #23201e;
+  --cube-text: #fffdf8;
+  --ui-bg: #faf6ee;
+  --ui-fg: #23201e;
+  --ui-accent: #b86a45;
+  --ui-muted: color-mix(in oklab, var(--ui-fg) 72%, transparent);
+  --ui-accent-text: #954f31;
+  --ui-cta-bg: #a85d3a;
+  --ui-cta-fg: #fffdf8;
+  --checker-white-bar-edge: #5a5350;
+  --checker-black-bar-edge: var(--checker-black-edge);
+  --font-display: "Iowan Old Style", "Charter", "Georgia", "Times New Roman", serif;
+  --radius-board: 4px;
+  --shadow-checker: 0 1px 2px rgb(35 32 30 / 0.28);
+  --board-frame-highlight: rgb(35 32 30 / 0.16);
+  --board-label: rgb(35 32 30 / 0.5);
+  color-scheme: light;
+}

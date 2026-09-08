@@ -191,6 +191,14 @@ jobs:
       - run: pnpm test:e2e
         id: e2e
       - uses: actions/upload-artifact@v4
+        # The screenshot matrix (3 themes x 3 widths of /play/local-42, written by
+        # web/e2e/themes.spec.ts) is uploaded on every run, pass or fail, so a
+        # reviewer can look at the board without checking the branch out.
+        if: ${{ always() }}
+        with:
+          name: screens
+          path: web/test-results/screens/
+      - uses: actions/upload-artifact@v4
         # Only when the e2e step itself failed; the HTML report is configured in web/playwright.config.ts.
         if: ${{ failure() && steps.e2e.outcome == 'failure' }}
         with:

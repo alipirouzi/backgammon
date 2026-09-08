@@ -1,0 +1,580 @@
+/* Table layout (spec §5.2). The board is the hero; the player cards read as
+   broadcast lower-thirds stood on end, the console under the board carries
+   the status line and the action bar, and the analysis drawer's collapsed
+   line is reserved at the bottom. Palette and display type come from the
+   active theme's --ui-* / --font-display tokens. Movement is on transform
+   and opacity; hover/on-roll state changes use short colour transitions,
+   all disabled under prefers-reduced-motion. */
+
+.table {
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --display-weight: 400;
+  --display-tracking: -0.02em;
+  --rule: color-mix(in oklab, var(--ui-fg) 14%, transparent);
+  --rule-strong: color-mix(in oklab, var(--ui-fg) 28%, transparent);
+  --muted: var(--ui-muted);
+  --panel: color-mix(in oklab, var(--ui-fg) 4%, transparent);
+  --panel-raised: color-mix(in oklab, var(--ui-fg) 8%, transparent);
+  --cta-bg: var(--ui-cta-bg);
+  --cta-fg: var(--ui-cta-fg);
+  --cta-radius: calc(var(--radius-board) / 2 + 2px);
+  --danger: #b3413a;
+  --table-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.7), 0 12px 24px -12px rgb(0 0 0 / 0.5);
+  --page-x: clamp(1rem, 3vw, 3rem);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "opp"
+    "stage"
+    "me"
+    "console"
+    "drawer";
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 100rem;
+  margin-inline: auto;
+  padding: var(--space-4) var(--page-x) var(--space-7);
+  color: var(--ui-fg);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="broadcast"] .table {
+  --display-weight: 700;
+  --display-tracking: -0.04em;
+}
+[data-theme="editorial"] .table {
+  --table-shadow: 0 30px 60px -30px rgb(35 32 30 / 0.35), 0 8px 20px -12px rgb(35 32 30 / 0.25);
+}
+
+/* Wide: cards flank the board; console and drawer span the full width. */
+@media (min-width: 900px) {
+  .table {
+    grid-template-columns: minmax(11rem, 14rem) minmax(0, 1fr) minmax(11rem, 14rem);
+    grid-template-areas:
+      "opp stage me"
+      "console console console"
+      "drawer drawer drawer";
+    column-gap: clamp(var(--space-4), 2.5vw, var(--space-6));
+    align-items: stretch;
+    padding-top: var(--space-5);
+  }
+}
+
+/* Page heading for /play/[gameId]: present for heading navigation, not drawn (the board is the hero). */
+.play__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.table > .player-card[data-side="left"] { grid-area: opp; }
+.table > .player-card[data-side="right"] { grid-area: me; }
+.table__stage { grid-area: stage; position: relative; }
+.table__console { grid-area: console; }
+.table__drawer { grid-area: drawer; }
+
+/* Board ----------------------------------------------------------------- */
+
+.table__board {
+  border-radius: var(--radius-board);
+  box-shadow: var(--table-shadow);
+}
+
+/* Player cards ---------------------------------------------------------- */
+
+.player-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "head stats foot";
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--cta-radius);
+  background: var(--panel);
+  transition: border-color var(--duration-normal) ease, background-color var(--duration-normal) ease;
+}
+.player-card::before {
+  /* On-roll marker: an accent bar along the edge nearest the board. */
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 4px;
+  border-radius: var(--cta-radius) 0 0 var(--cta-radius);
+  background: var(--ui-accent);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity var(--duration-normal) ease, transform var(--duration-normal) var(--ease-out-expo);
+}
+.player-card[data-on-roll="true"] {
+  border-color: var(--rule-strong);
+  background: var(--panel-raised);
+}
+.player-card[data-on-roll="true"]::before {
+  opacity: 1;
+  transform: none;
+}
+
+.player-card__head {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.player-card__checker {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  box-shadow: var(--shadow-checker), inset 0 0 0 2px rgb(255 255 255 / 0.12);
+}
+.player-card[data-player="white"] .player-card__checker {
+  background: var(--checker-white);
+  border: 2px solid var(--checker-white-edge);
+}
+.player-card[data-player="black"] .player-card__checker {
+  background: var(--checker-black);
+  border: 2px solid var(--checker-black-edge);
+}
+.player-card__who { min-width: 0; }
+.player-card__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking);
+  white-space: nowrap;
+}
+.player-card__caption {
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-card__stats {
+  grid-area: stats;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-5);
+  margin: 0;
+}
+.player-card__stat {
+  display: grid;
+  gap: 0;
+  text-align: right;
+}
+.player-card__stat[hidden] { display: none; }
+.player-card__stat dt {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.player-card__stat dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-xl);
+  line-height: 1;
+  letter-spacing: var(--display-tracking);
+}
+.player-card__stat--score dd { color: var(--ui-fg); }
+.player-card__of {
+  font-size: 0.5em;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.player-card__foot {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.player-card__stat--cube dd { line-height: 1; }
+.player-card__cube-value {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  padding: 0 0.35rem;
+  border-radius: 5px;
+  background: var(--cube-face);
+  color: var(--cube-text);
+  box-shadow: var(--shadow-checker);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.player-card__turn {
+  margin: 0;
+  min-width: 4.5ch;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+  white-space: pre;
+}
+
+/* Narrow bars: name and turn marker on the first row, the figures on the second. */
+@media (max-width: 37.5rem) {
+  .player-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head foot"
+      "stats stats";
+    gap: var(--space-2) var(--space-3);
+  }
+  .player-card__stats {
+    justify-content: flex-start;
+    gap: var(--space-5);
+  }
+  .player-card__stat { text-align: left; }
+  .player-card__turn { min-width: 0; }
+  /* Phones: let the board bleed to 0.5rem so each point column is >= 24px wide (WCAG 2.5.8); cards and console keep --page-x. */
+  .table__stage { margin-inline: calc(0.5rem - var(--page-x)); }
+  /* The resign chooser cannot hang off a right-anchored popover on a 375px console: open it in flow, full width. */
+  .actions__group--resign {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+  .resign {
+    position: static;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Wide: the card stands on end beside the board. */
+@media (min-width: 900px) {
+  .player-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "head"
+      "stats"
+      "foot";
+    align-content: stretch;
+    gap: var(--space-5);
+    padding: var(--space-5) var(--space-4);
+  }
+  .player-card[data-side="left"]::before {
+    inset: -1px -1px -1px auto;
+    border-radius: 0 var(--cta-radius) var(--cta-radius) 0;
+  }
+  .player-card__stats {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+  .player-card__stat { text-align: left; }
+  .player-card__stat--score dd {
+    font-size: clamp(2.75rem, 4.5vw, 4.25rem);
+    letter-spacing: -0.04em;
+  }
+  .player-card__foot {
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: end;
+  }
+  .player-card[data-side="left"] .player-card__head,
+  .player-card[data-side="left"] .player-card__stat,
+  .player-card[data-side="left"] .player-card__foot {
+    text-align: right;
+    align-items: flex-end;
+    flex-direction: row-reverse;
+  }
+  .player-card[data-side="left"] .player-card__foot {
+    flex-direction: column;
+  }
+}
+
+/* Console: status + actions ------------------------------------------- */
+
+.table__console {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  padding-top: var(--space-2);
+}
+
+.status {
+  display: grid;
+  gap: var(--space-1);
+  min-width: min(100%, 18rem);
+  flex: 1 1 18rem;
+}
+.status__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking);
+}
+/* Focus parks here when an action button disables itself (see ActionBar). */
+.status__line:focus { outline: none; }
+.status__line:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.status__line[data-tone="busy"] { color: var(--muted); }
+.status__line[data-tone="error"] {
+  color: var(--danger);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--text-base);
+  letter-spacing: 0;
+}
+.status__line[data-tone="result"] { color: var(--ui-accent-text); }
+.status__pulse {
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: var(--ui-accent);
+  animation: status-pulse 1.4s var(--ease-in-out) infinite;
+}
+@keyframes status-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: none; }
+}
+.status__ticker {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+/* Retry after an engine failure: under the error text, sized like an action. */
+.status__retry {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.actions__group {
+  display: flex;
+  gap: var(--space-2);
+}
+.actions__group--resign { position: relative; }
+
+/* Buttons --------------------------------------------------------------- */
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--cta-radius);
+  background: transparent;
+  color: var(--ui-fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    opacity var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+.action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--ui-accent);
+  color: var(--ui-accent-text);
+}
+.action:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+.action:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+.action:disabled {
+  cursor: not-allowed;
+  opacity: 0.32;
+}
+
+.action--primary:not(:disabled) {
+  background: var(--cta-bg);
+  border-color: var(--cta-bg);
+  color: var(--cta-fg);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 10px 24px -14px var(--ui-accent);
+}
+.action--primary:hover:not(:disabled) {
+  border-color: var(--cta-bg);
+  color: var(--cta-fg);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 16px 30px -14px var(--ui-accent);
+}
+.action--danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.action--quiet {
+  border-color: transparent;
+  color: var(--muted);
+}
+.action--quiet:hover:not(:disabled) { border-color: var(--rule-strong); }
+
+/* Resign chooser: a small panel that opens above the Resign button. */
+.resign {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 2;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 15rem;
+  padding: var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--cta-radius);
+  background: var(--ui-bg);
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.6);
+  animation: rise-in var(--duration-normal) var(--ease-out-expo) both;
+}
+.resign[hidden] { display: none; }
+.resign__option {
+  justify-content: space-between;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.resign__kind { font-weight: 600; }
+.resign__points {
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Finish banner -------------------------------------------------------- */
+
+.finish {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-radius: var(--radius-board);
+  background: color-mix(in oklab, var(--ui-bg) 72%, transparent);
+  text-align: center;
+  animation: fade-in var(--duration-slow) ease both;
+}
+.finish__eyebrow {
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+}
+.finish__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking);
+  text-shadow: 0 2px 24px var(--ui-bg);
+  animation: rise-in var(--duration-slow) var(--ease-out-expo) both;
+}
+/* Focus lands on the title when the banner appears (the board behind it is inert). */
+.finish__title:focus { outline: none; }
+.finish__title:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 8px;
+  border-radius: 2px;
+}
+.finish__score {
+  margin: 0;
+  color: var(--muted);
+}
+.finish__actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+/* Analysis drawer (collapsed line; the drawer itself is piece E) -------- */
+
+.table__drawer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-height: 3.25rem;
+  margin-top: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.drawer__label {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+}
+.drawer__verdict { flex: 1 1 16rem; }
+.drawer__toggle { min-height: 2.25rem; }
+.drawer__planned {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table *,
+  .table *::before,
+  .table *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

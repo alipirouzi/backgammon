@@ -11,3 +11,10 @@ test("landing page renders the board mount", async ({ page }) => {
   await expect(page.locator("#board-mount")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Backgammon");
 });
+
+test("table page has a page-level heading for screen-reader navigation", async ({ page }) => {
+  await page.goto("/play/local-42");
+  const h1 = page.getByRole("heading", { level: 1 });
+  await expect(h1).toHaveCount(1);
+  await expect(h1).toHaveText(/computer/i);
+});
