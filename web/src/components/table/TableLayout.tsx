@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useStore } from "zustand";
 import type { StoreApi } from "zustand/vanilla";
 
+import { AnalysisDrawer } from "@/components/analysis/AnalysisDrawer";
 import { Board } from "@/components/board/Board";
 import { openingBoard } from "@/components/board/types";
+import { reviewHref } from "@/components/review/game-source";
 import type { Cube } from "@/engine/types";
 import {
   canConfirm,
@@ -49,9 +52,10 @@ export interface TableLayoutProps {
 
 /**
  * Spec §5.2: player cards flank the board (computer left, you right), the
- * action bar and status line sit under the board, the analysis drawer's
- * collapsed line is reserved below (the drawer itself is piece E). Under
- * 900px the cards become bars above and below the board.
+ * action bar and status line sit under the board, the analysis drawer
+ * (`AnalysisDrawer`: verdict strip, expandable to candidates and the move
+ * list) closes the layout. Under 900px the cards become bars above and
+ * below the board and the expanded drawer is a bottom sheet.
  *
  * Two banners share the finish overlay: between the games of a match
  * (`awaitingNextGame`: last result, score, "Next game" — the store draws no
@@ -78,7 +82,6 @@ export function TableLayout({ store, onPlayAgain }: TableLayoutProps) {
   const status = statusFor(s);
   const retryable = canRetry(s);
   const ticker = lastBotEvent(s);
-  const botChoice = s.analysis.forBot;
   const statusLine = useRef<HTMLParagraphElement>(null);
   const finishTitle = useRef<HTMLHeadingElement>(null);
 
@@ -140,9 +143,16 @@ export function TableLayout({ store, onPlayAgain }: TableLayoutProps) {
                   Next game
                 </button>
               ) : (
-                <button type="button" className="action action--primary" onClick={onPlayAgain}>
-                  Play again
-                </button>
+                <>
+                  <button type="button" className="action action--primary" onClick={onPlayAgain}>
+                    Play again
+                  </button>
+                  {s.gameId !== null ? (
+                    <Link href={reviewHref(s.gameId, s.botLevel)} className="action">
+                      Review this game
+                    </Link>
+                  ) : null}
+                </>
               )}
             </div>
           </section>
@@ -186,17 +196,7 @@ export function TableLayout({ store, onPlayAgain }: TableLayoutProps) {
         />
       </div>
 
-      <aside className="table__drawer" aria-label="Analysis">
-        <span className="drawer__label">Analysis</span>
-        <span className="drawer__verdict">
-          {botChoice
-            ? `Computer's choice: ${botChoice.chosen.play.notation || "no move"} · ${botChoice.chosen.candidates.length} candidate${botChoice.chosen.candidates.length === 1 ? "" : "s"}`
-            : "Candidates and grades appear here as the game goes on."}
-        </span>
-        <button type="button" className="action action--quiet drawer__toggle" disabled title="Coming with the analysis drawer">
-          Open <span className="drawer__planned">(planned)</span>
-        </button>
-      </aside>
+      <AnalysisDrawer store={store} />
     </div>
   );
 }

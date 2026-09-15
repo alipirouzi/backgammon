@@ -15,7 +15,13 @@
    secondary text colour on --ui-bg and the 4 %/8 % panels; --ui-accent-text is
    the accent as *text* (Editorial's terracotta is 3.8:1 on linen, so it darkens
    there); --ui-cta-bg/--ui-cta-fg pair the primary call to action. Bar-edge
-   tokens give a hit checker a ring that separates from the bar (>= 3:1). */
+   tokens give a hit checker a ring that separates from the bar (>= 3:1).
+
+   Analysis tokens (used by components/analysis and components/review, on
+   the table's drawer and on /review alike): the four grades as badge
+   colours with --grade-ink as their text, the six probability segments, and
+   --played for the highlighted row. The dark themes share one set; Editorial
+   darkens the grades so the ink and its 85 % loss figure stay >= 4.5:1. */
 
 :root,
 [data-theme="heritage"] {
@@ -46,6 +52,18 @@
   --shadow-checker: 0 2px 3px rgb(0 0 0 / 0.5);
   --board-frame-highlight: rgb(255 226 180 / 0.18);
   --board-label: rgb(239 228 207 / 0.55);
+  --grade-best: #4fb477;
+  --grade-fine: #86b4d6;
+  --grade-error: #e2a63c;
+  --grade-blunder: #dd5a52;
+  --grade-ink: #0f0a08;
+  --prob-win: color-mix(in oklab, var(--ui-accent) 62%, var(--ui-bg));
+  --prob-win-g: var(--ui-accent);
+  --prob-win-bg: color-mix(in oklab, var(--ui-accent) 55%, white);
+  --prob-lose: color-mix(in oklab, var(--ui-fg) 16%, transparent);
+  --prob-lose-g: color-mix(in oklab, var(--ui-fg) 30%, transparent);
+  --prob-lose-bg: color-mix(in oklab, var(--ui-fg) 46%, transparent);
+  --played: color-mix(in oklab, var(--ui-accent) 12%, transparent);
   color-scheme: dark;
 }
 
@@ -108,5 +126,11 @@
   --shadow-checker: 0 1px 2px rgb(35 32 30 / 0.28);
   --board-frame-highlight: rgb(35 32 30 / 0.16);
   --board-label: rgb(35 32 30 / 0.5);
+  --grade-best: #286e44;
+  --grade-fine: #33607c;
+  --grade-error: #875010;
+  --grade-blunder: #a03a33;
+  --grade-ink: #fffdf8;
+  --prob-win-bg: color-mix(in oklab, var(--ui-accent) 60%, black);
   color-scheme: light;
 }

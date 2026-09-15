@@ -1,0 +1,85 @@
+// Persistence for the web app (spec §5.5) — only `Game` and `GameSeat` for
+// now; `User`, Auth.js tables, chat, leagues and ratings arrive with later
+// pieces. Finished games are immutable: a bot-game record posted from the
+// browser is re-verified by replaying it through the engine
+// (web/src/server/games.ts) before it is stored as `finished`.
+//
+// Migrations live in prisma/migrations and run at container start
+// (`prisma migrate deploy`, Task 10); `DATABASE_URL` is only read at runtime.
+
+generator client {
+  provider = "prisma-client-js"
+  // The image builds and runs on node:22-bookworm-slim (Debian 12, glibc,
+  // OpenSSL 3), so the client ships that engine explicitly; "native" keeps
+  // local development on macOS and CI on Ubuntu working from the same schema.
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// `single`: one money game (`Record.length` 0); `match`: first to `matchLength` points.
+enum GameFormat {
+  single
+  match
+}
+
+/// Lifecycle of a game; bot games arrive from the browser already `finished`.
+enum GameStatus {
+  created
+  active
+  finished
+  abandoned
+}
+
+/// Bot strength (`bg_bot::Level`), for the seat the engine played.
+enum BotLevel {
+  beginner
+  intermediate
+  club
+}
+
+model Game {
+  id          String     @id @default(cuid())
+  /// Invite token for games shared by link (piece 4); `null` for bot games.
+  token       String?    @unique
+  format      GameFormat
+  /// Match length in points; `0` for a single (money) game.
+  matchLength Int
+  /// Clock settings when a clock is on (piece 4); `null` for no clock.
+  clockConfig Json?
+  /// Level of the engine's bot when one seat was played by the computer.
+  botLevel    BotLevel?
+  /// Seed of the dice stream (`Record.seed`, at most 2^53 − 1).
+  seed        BigInt
+  status      GameStatus
+  /// Outcome once `finished` (`web/src/server/games.ts` `StoredResult`).
+  result      Json?
+  /// The full `Record` (seed, length, rules, turns) exactly as the engine replays it.
+  moveLog     Json
+  createdAt   DateTime   @default(now())
+  finishedAt  DateTime?
+  seats       GameSeat[]
+
+  @@index([status, createdAt])
+}
+
+/// Who sat where: `seat` 0 is White, 1 is Black.
+model GameSeat {
+  id             String  @id @default(cuid())
+  gameId         String
+  game           Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  /// 0 = White, 1 = Black.
+  seat           Int
+  /// The member in this seat (piece 5); no relation until the `User` model exists.
+  userId         String?
+  /// Display name chosen by a guest; `null` for members and for the bot.
+  guestName      String?
+  /// Hash of the secret that lets a guest reclaim the seat (piece 4).
+  seatSecretHash String?
+
+  @@unique([gameId, seat])
+  @@index([userId])
+}

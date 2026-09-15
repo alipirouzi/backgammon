@@ -1,0 +1,474 @@
+/* Analysis drawer (spec §5.2): a broadcast graphics strip under the board.
+   Collapsed: label · grade badge + your verdict · the computer's verdict ·
+   controls. Expanded: tabs and the candidate tables. Palette comes from the
+   theme's --ui-* tokens; the four grades, the six probability segments and
+   the played-row highlight are theme tokens (--grade-*, --grade-ink,
+   --prob-*, --played in styles/themes.css), so the same components render
+   the same on /review, which has no .analysis ancestor. Motion is on
+   transform and opacity only, and off entirely under prefers-reduced-motion.
+   Under 900px the expanded panel is a bottom sheet. */
+
+.analysis {
+  --rule: color-mix(in oklab, var(--ui-fg) 14%, transparent);
+  --rule-strong: color-mix(in oklab, var(--ui-fg) 28%, transparent);
+  --muted: var(--ui-muted);
+  --panel: color-mix(in oklab, var(--ui-fg) 4%, transparent);
+  --sheet-radius: 18px;
+
+  position: relative;
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-sm);
+  color: var(--ui-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visually hidden (captions, the live region). */
+.analysis__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Strip ----------------------------------------------------------------- */
+
+.analysis__strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-height: 3.25rem;
+  padding: var(--space-2) 0;
+}
+.analysis__label {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+}
+.analysis__verdicts {
+  flex: 1 1 18rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
+  min-width: 0;
+}
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+}
+.verdict[data-side="you"] { font-weight: 500; }
+.verdict[data-side="computer"],
+.verdict--empty { color: var(--muted); }
+.verdict__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.analysis__controls {
+  display: flex;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+.analysis__controls .action { min-height: 2.25rem; }
+/* The strip is the one tap surface under the board on a phone: keep the 44px target there and on any coarse pointer. */
+@media (max-width: 899.98px), (pointer: coarse) {
+  .analysis__controls .action { min-height: 2.75rem; }
+}
+.analysis__switch[data-on="true"] { color: var(--muted); }
+
+/* Grade badge ----------------------------------------------------------- */
+
+.grade {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  padding: 0.2em 0.6em 0.22em;
+  border-radius: 999px;
+  background: var(--grade-colour, var(--rule-strong));
+  color: var(--grade-ink);
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.grade[data-grade="best"] { --grade-colour: var(--grade-best); }
+.grade[data-grade="fine"] { --grade-colour: var(--grade-fine); }
+.grade[data-grade="error"] { --grade-colour: var(--grade-error); }
+.grade[data-grade="blunder"] { --grade-colour: var(--grade-blunder); }
+.grade__loss {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.85;
+}
+
+/* Expanded panel -------------------------------------------------------- */
+
+.analysis__panel {
+  /* Opaque equivalent of --panel over the page, for the candidate table's scroll cue. */
+  --cands-bg: color-mix(in oklab, var(--ui-fg) 4%, var(--ui-bg));
+
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius-board) / 2 + 2px);
+  background: var(--panel);
+  transition: transform var(--duration-normal) var(--ease-out-expo), opacity var(--duration-normal) ease;
+}
+@starting-style {
+  .analysis__panel {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.analysis__scrim,
+.analysis__grab { display: none; }
+
+.tabs {
+  display: flex;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+.tab {
+  position: relative;
+  padding: var(--space-2) 0 var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--duration-fast) ease;
+}
+.tab::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--ui-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+.tab[aria-selected="true"] { color: var(--ui-fg); }
+.tab[aria-selected="true"]::after { transform: none; }
+.tab:hover:not(:disabled) { color: var(--ui-fg); }
+.tab:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.tab__planned {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.tabpanel:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+.analysis__empty,
+.moves__empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Decisions ------------------------------------------------------------- */
+
+.decisions {
+  display: grid;
+  gap: var(--space-6);
+}
+.decision {
+  display: grid;
+  gap: var(--space-3);
+}
+.decision__head {
+  display: grid;
+  gap: var(--space-1);
+}
+.decision__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight, 400);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking, -0.02em);
+}
+.decision__meta {
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Candidate table ------------------------------------------------------- */
+
+.cands { display: grid; gap: var(--space-2); }
+/* The table scrolls sideways where it does not fit (the phone sheet, /review
+   at phone width). Scroll shadows say so: two covers in the container's own
+   colour scroll with the content (attachment: local) and uncover an edge
+   shadow (attachment: scroll) only while more lies beyond that edge. */
+.cands__scroll {
+  --cands-shadow: color-mix(in oklab, var(--ui-fg) 28%, transparent);
+
+  overflow-x: auto;
+  background:
+    linear-gradient(90deg, var(--cands-bg, var(--ui-bg)) 40%, transparent) left / 3rem 100% local,
+    linear-gradient(270deg, var(--cands-bg, var(--ui-bg)) 40%, transparent) right / 3rem 100% local,
+    radial-gradient(farthest-side at 0 50%, var(--cands-shadow), transparent) left / 1rem 100% scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--cands-shadow), transparent) right / 1rem 100% scroll;
+  background-repeat: no-repeat;
+}
+.cands__hint {
+  display: none;
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+@media (max-width: 36rem) {
+  .cands__hint { display: block; }
+}
+.cands__table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+}
+.cands__table th {
+  padding: 0 var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.cands__table th abbr,
+.prob__figure abbr { text-decoration: none; }
+.cands__table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.cands__table tbody tr:last-child td { border-bottom: 0; }
+.cands__table tr[data-played="true"] td { background: var(--played); }
+.cands__table tr[data-rank="1"] .cands__notation { font-weight: 700; }
+.cands__rank {
+  width: 2ch;
+  text-align: right;
+  color: var(--muted);
+}
+.cands__play { white-space: nowrap; }
+.cands__notation {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  letter-spacing: -0.01em;
+}
+.cands__tag {
+  display: inline-block;
+  margin-inline-start: var(--space-2);
+  padding: 0.1em 0.5em;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+  vertical-align: middle;
+}
+.cands__num {
+  text-align: right;
+  white-space: nowrap;
+}
+.cands__delta { color: var(--muted); }
+.cands__probs { min-width: 12rem; }
+.cands__sample {
+  white-space: nowrap;
+  text-align: right;
+  color: var(--muted);
+}
+.cands__gap td {
+  padding-block: var(--space-1);
+  font-size: var(--text-xs);
+  text-align: center;
+  color: var(--muted);
+}
+.cands__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.cands__note {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.cands__more { min-height: 2.25rem; }
+
+/* Probability bar ------------------------------------------------------- */
+
+.prob {
+  display: grid;
+  gap: 0.3rem;
+}
+.prob__track {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--prob-lose);
+}
+.prob__seg { flex: 0 0 calc(var(--w) * 1%); }
+.prob__seg[data-seg="win-bg"] { background: var(--prob-win-bg); }
+.prob__seg[data-seg="win-g"] { background: var(--prob-win-g); }
+.prob__seg[data-seg="win"] { background: var(--prob-win); }
+.prob__seg[data-seg="lose"] { background: var(--prob-lose); }
+.prob__seg[data-seg="lose-g"] { background: var(--prob-lose-g); }
+.prob__seg[data-seg="lose-bg"] { background: var(--prob-lose-bg); }
+.prob__readout {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.prob__figure abbr {
+  margin-inline-start: 0.25em;
+  font-size: 0.85em;
+  letter-spacing: 0.06em;
+}
+
+/* Move list ------------------------------------------------------------- */
+
+.moves { overflow-x: auto; }
+.moves__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.moves__table th {
+  padding: 0 var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+}
+.moves__table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--rule);
+}
+.moves__table tr[aria-current="true"] td { background: var(--played); }
+.moves__index {
+  width: 3ch;
+  text-align: right;
+  color: var(--muted);
+}
+.moves__action { font-family: var(--font-display); }
+.moves__table tr[data-player="black"] .moves__action { color: var(--muted); }
+
+/* Bottom sheet under 900px --------------------------------------------- */
+
+@media (max-width: 899.98px) {
+  .analysis__scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    border: 0;
+    padding: 0;
+    background: color-mix(in oklab, var(--ui-bg) 55%, transparent);
+    cursor: default;
+  }
+  /* While the sheet is open the page behind it does not scroll (the drawer sets the attribute). */
+  html[data-analysis-sheet="true"] { overflow: hidden; }
+  .analysis__panel {
+    --cands-bg: var(--ui-bg);
+
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 20;
+    max-height: 78dvh;
+    margin: 0;
+    padding-top: var(--space-2);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+    background: var(--ui-bg);
+    box-shadow: 0 -24px 60px -20px rgb(0 0 0 / 0.55);
+  }
+  @starting-style {
+    .analysis__panel {
+      opacity: 1;
+      transform: translateY(100%);
+    }
+  }
+  .analysis__grab {
+    display: grid;
+    place-items: center;
+    height: 2rem;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .analysis__grab-bar {
+    display: block;
+    width: 3rem;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--rule-strong);
+  }
+  .analysis__grab:focus-visible {
+    outline: 3px solid var(--ui-accent);
+    outline-offset: 2px;
+    border-radius: 999px;
+  }
+  .analysis__controls { margin-inline-start: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .analysis,
+  .analysis *,
+  .analysis *::before,
+  .analysis *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

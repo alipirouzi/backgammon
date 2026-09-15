@@ -1,0 +1,11 @@
+/* Note under the table when a finished game could not be saved (PlayGame.tsx). */
+.play-save {
+  max-width: 60ch;
+  margin: 0.75rem auto 0;
+  padding: 0.5rem 0.9rem;
+  border-inline-start: 3px solid var(--ui-accent);
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  background: color-mix(in oklab, var(--ui-fg) 4%, transparent);
+}

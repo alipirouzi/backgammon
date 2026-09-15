@@ -1,7 +1,7 @@
 /* Table layout (spec §5.2). The board is the hero; the player cards read as
    broadcast lower-thirds stood on end, the console under the board carries
-   the status line and the action bar, and the analysis drawer's collapsed
-   line is reserved at the bottom. Palette and display type come from the
+   the status line and the action bar, and the analysis drawer
+   (components/analysis) closes the grid. Palette and display type come from the
    active theme's --ui-* / --font-display tokens. Movement is on transform
    and opacity; hover/on-roll state changes use short colour transitions,
    all disabled under prefers-reduced-motion. */
@@ -453,6 +453,8 @@
   color: var(--muted);
 }
 .action--quiet:hover:not(:disabled) { border-color: var(--rule-strong); }
+/* Links styled as actions (the finish banner's "Review this game"). */
+a.action { text-decoration: none; }
 
 /* Resign chooser: a small panel that opens above the Resign button. */
 .resign {
@@ -533,33 +535,7 @@
   margin-top: var(--space-3);
 }
 
-/* Analysis drawer (collapsed line; the drawer itself is piece E) -------- */
-
-.table__drawer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-  min-height: 3.25rem;
-  margin-top: var(--space-3);
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--rule);
-  font-size: var(--text-sm);
-  color: var(--muted);
-}
-.drawer__label {
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--ui-accent-text);
-}
-.drawer__verdict { flex: 1 1 16rem; }
-.drawer__toggle { min-height: 2.25rem; }
-.drawer__planned {
-  text-transform: none;
-  letter-spacing: 0;
-  font-weight: 400;
-}
+/* Analysis drawer: grid placement only; its own styles are in components/analysis/analysis.css. */
 
 @keyframes fade-in {
   from { opacity: 0; }

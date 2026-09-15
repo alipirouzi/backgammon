@@ -14,14 +14,16 @@ import type {
   CubeAnalysis,
   GameState,
   MatchState,
+  MoveAnalysis,
   Play,
   Record as GameRecord,
   Turn,
 } from "../src/engine/types";
 import { DiceRng } from "../src/game/dice";
-import { GAMES_KEY_PREFIX, THEME_KEY, type StorageLike } from "../src/game/local-games";
-import { appendTurn, moveTurn, openingRollTurn, resignTurn, rollTurn } from "../src/game/record";
+import { GAMES_KEY_PREFIX, LEVEL_SUFFIX, loadLocalGameLevel, THEME_KEY, type StorageLike } from "../src/game/local-games";
+import { appendTurn, botSeed, moveTurn, openingRollTurn, resignTurn, rollTurn } from "../src/game/record";
 import {
+  analysisForTurn,
   canConfirm,
   canDouble,
   canDrop,
@@ -33,11 +35,12 @@ import {
   isAwaitingNextGame,
   isBotTurn,
   isHumanTurn,
+  latestAnalysedSide,
   legalSources,
   legalTargetsFrom,
   pipCounts,
 } from "../src/game/selectors";
-import { createGameStore, type GameStore } from "../src/game/store";
+import { ANALYSIS_KEY, analysisSeedFor, createGameStore, type GameStore } from "../src/game/store";
 
 class MemoryStorage implements StorageLike {
   readonly map = new Map<string, string>();
@@ -106,6 +109,21 @@ const chosen = (p: Play, ...others: Play[]): ChosenPlay => ({
   play: p,
   candidates: [p, ...others].map((c, i) => ({ play: c, equity: -i * 0.1, probs: PROBS, rollout: null })),
 });
+/** A club analysis over `plays` (best first, 0.03 apart) in which `plays[playedIndex]` was played. */
+const analysis = (plays: Play[], playedIndex: number, withRollout = false): MoveAnalysis => {
+  const errorSize = playedIndex * 0.03;
+  return {
+    candidates: plays.map((p, i) => ({
+      play: p,
+      equity: 0.1 - i * 0.03,
+      probs: PROBS,
+      rollout: withRollout ? { trials: 100, equity: 0.1 - i * 0.03, stdErr: 0.011, probs: PROBS } : null,
+    })),
+    playedIndex,
+    errorSize,
+    category: errorSize === 0 ? "best" : errorSize < 0.02 ? "fine" : errorSize < 0.08 ? "error" : "blunder",
+  };
+};
 const cube = (action: CubeAnalysis["action"], canDouble = true): CubeAnalysis => ({
   action,
   canDouble,
@@ -347,6 +365,7 @@ describe("human move entry", () => {
     });
     engine.script("cubeAction", cube("noDouble"));
     engine.script("choosePlay", chosen(botPlay));
+    engine.script("analyzePlay", analysis(PLAYS, 1));
 
     await state().confirmPlay();
 
@@ -358,6 +377,7 @@ describe("human move entry", () => {
       moveTurn("black", botDice, "24/21 13/10"),
     ]);
     expect(records).toHaveLength(3);
+    // The bot answers first; the person's play is graded (analyzePlay) after the reply, so the grade never delays it.
     expect(engine.calls.map((c) => c.method)).toEqual([
       "applyPlay",
       "applyPlay",
@@ -366,6 +386,7 @@ describe("human move entry", () => {
       "replay",
       "choosePlay",
       "replay",
+      "analyzePlay",
     ]);
     expect(engine.callsTo("cubeAction")[0]).toEqual([
       OPENING,
@@ -912,6 +933,7 @@ describe("reopening a stored game", () => {
   const finishedResult = { winner: "black" as const, kind: "single" as const, points: 1 };
   const finished: GameRecord = appendTurn(inProgress, rollTurn("white", secondDice), resignTurn("white", 1));
   const key = `${GAMES_KEY_PREFIX}local-${SEED}`;
+  const levelKey = `${key}${LEVEL_SUFFIX}`;
 
   it("loads a finished record instead of starting the seed over", async () => {
     storage.setItem(key, JSON.stringify(finished));
@@ -962,6 +984,55 @@ describe("reopening a stored game", () => {
 
     expect(state().record?.turns).toEqual(inProgress.turns);
     expect(canRoll(state())).toBe(true);
+  });
+
+  it("records the level a new game starts at under bg.games.<id>.level, before anything is replayed", async () => {
+    expectError = true;
+    engine.script("replay", new Error("engine worker failed"));
+    await state().newGame({ format: "single", level: "club", seed: SEED });
+    expect(storage.getItem(levelKey)).toBe("club");
+    expect(loadLocalGameLevel(`local-${SEED}`, storage)).toBe("club");
+  });
+
+  it("resumes a stored record at the level it was played at, whatever the URL says, and the bot plays at that level", async () => {
+    const stored = inProgress.turns.slice(0, 2);
+    storage.setItem(key, JSON.stringify({ ...inProgress, turns: stored }));
+    storage.setItem(levelKey, "club");
+    engine.script("replay", match({ onRoll: "black", phase: "toRoll" }));
+    engine.script("cubeAction", cube("noDouble"));
+    engine.script("replay", match({ onRoll: "black", phase: "toMove", dice: botDice }));
+    engine.script("choosePlay", chosen(play("24/18 13/10", [24, 18], [13, 10])));
+    engine.script("replay", match({ onRoll: "white", phase: "toRoll" }));
+
+    await state().newGame({ format: "single", level: "beginner", seed: SEED });
+
+    expect(state().botLevel).toBe("club");
+    expect(engine.callsTo("cubeAction")[0][3]).toBe("club");
+    expect(engine.callsTo("choosePlay")[0][4]).toBe("club");
+    expect(storage.getItem(levelKey)).toBe("club");
+  });
+
+  it("a stored record without a level (or with garbage there) takes the URL's level and records it", async () => {
+    storage.setItem(key, JSON.stringify(inProgress));
+    engine.script("replay", match({ onRoll: "white", phase: "toRoll" }));
+    await state().newGame({ format: "single", level: "club", seed: SEED });
+    expect(state().botLevel).toBe("club");
+    expect(storage.getItem(levelKey)).toBe("club");
+
+    storage.setItem(levelKey, "grandmaster");
+    engine.script("replay", match({ onRoll: "white", phase: "toRoll" }));
+    await state().newGame({ format: "single", level: "intermediate", seed: SEED });
+    expect(state().botLevel).toBe("intermediate");
+    expect(storage.getItem(levelKey)).toBe("intermediate");
+  });
+
+  it("a finished record keeps its stored level too (what a retried post reports)", async () => {
+    storage.setItem(key, JSON.stringify(finished));
+    storage.setItem(levelKey, "club");
+    engine.script("replay", match({ onRoll: null, phase: "finished", result: finishedResult }, { score: { white: 0, black: 1 } }));
+    await state().newGame({ format: "single", level: "beginner", seed: SEED });
+    expect(state().botLevel).toBe("club");
+    expect(state().match?.game.phase).toBe("finished");
   });
 
   it("the stored record decides the format: it is the game that id names", async () => {
@@ -1097,5 +1168,211 @@ describe("selectors", () => {
     expect(canUndo(s)).toBe(false);
     expect(canConfirm(s)).toBe(false);
     expect(legalSources(s)).toEqual([]);
+  });
+});
+
+// --- analysis (piece E, Task 7) ---------------------------------------------
+
+describe("analysis", () => {
+  const PLAYS = [
+    play("13/8 6/5", [13, 8], [6, 5]),
+    play("13/8 24/23", [13, 8], [24, 23]),
+    play("24/19 19/18", [24, 19], [19, 18]),
+  ];
+  const AFTER_13_8: Board = { ...OPENING, white: OPENING.white.map((n, i) => (i === 13 ? 4 : i === 8 ? 4 : n)) };
+  const AFTER_13_8_6_5: Board = { ...AFTER_13_8, white: AFTER_13_8.white.map((n, i) => (i === 6 ? 4 : i === 5 ? 1 : n)) };
+  const MONEY_CTX = { length: 0, myAway: 0, theirAway: 0, crawford: false, postCrawford: false, cube: 1, cubeOwnerIsMe: null };
+
+  /** White to move 5-1 at the opening, 13/8 6/5 entered and ready to confirm; the bot's reply is scripted. */
+  async function enter13_8_6_5(): Promise<void> {
+    engine.script("replay", match({ phase: "toMove", dice: { hi: 5, lo: 1 } }));
+    engine.script("legalPlays", PLAYS);
+    await state().newGame({ format: "single", level: "beginner", seed: SEED });
+    engine.script("applyPlay", AFTER_13_8, AFTER_13_8_6_5);
+    await state().selectPoint(13);
+    await state().selectPoint(8);
+    await state().selectPoint(6);
+    await state().selectPoint(5);
+    expect(canConfirm(state())).toBe(true);
+    engine.calls.length = 0;
+    engine.script("replay", match({ board: AFTER_13_8_6_5, onRoll: "black", phase: "toMove", dice: { hi: 6, lo: 3 } }));
+    engine.script("choosePlay", chosen(play("24/18 13/10", [24, 18], [13, 10]), play("24/15", [24, 18], [18, 15])));
+    engine.script("replay", match({ board: AFTER_13_8_6_5, onRoll: "white", phase: "toRoll" }));
+  }
+
+  it("grades the confirmed play with analyzePlay on the position before the move, and caches it by turn index", async () => {
+    await enter13_8_6_5();
+    engine.script("analyzePlay", analysis(PLAYS, 1, true));
+
+    await state().confirmPlay();
+
+    expect(engine.calls.map((c) => c.method)).toEqual(["replay", "choosePlay", "replay", "analyzePlay"]);
+    const [board, onRoll, dice, ctx, played, seed] = engine.callsTo("analyzePlay")[0];
+    expect([board, onRoll, dice, ctx, played]).toEqual([OPENING, "white", { hi: 5, lo: 1 }, MONEY_CTX, "13/8 6/5"]);
+    // The seed is the bot's derivation for the record as it stood before the move (turn index 1), so a review reproduces it.
+    expect(seed).toBe(botSeed({ seed: SEED, length: 0, rules: MONEY_RULES, turns: [expectedOpening] }));
+    expect(seed).toBe(analysisSeedFor(state().record!, 1));
+
+    expect(state().analysis.forHuman).toEqual({
+      turnIndex: 1,
+      player: "white",
+      dice: { hi: 5, lo: 1 },
+      played: "13/8 6/5",
+      analysis: analysis(PLAYS, 1, true),
+      error: null,
+    });
+    expect(analysisForTurn(state(), 1)).toEqual(analysis(PLAYS, 1, true));
+    expect(analysisForTurn(state(), 2)).toBeNull();
+    // The bot moved after the grade: its choice is the more recent decision.
+    expect(state().analysis.forBot?.turnIndex).toBe(2);
+    expect(latestAnalysedSide(state())).toBe("bot");
+    expect(state().ui.busy).toBe(false);
+  });
+
+  it("keeps the game going when the analysis fails, and reports the failure in the drawer only", async () => {
+    await enter13_8_6_5();
+    engine.script("analyzePlay", new Error("engine: analyzePlay timed out after 10000 ms"));
+
+    await state().confirmPlay();
+
+    expect(state().ui.lastError).toBeNull();
+    expect(state().record?.turns.map((t) => t.action)).toEqual(["roll", "move", "move"]);
+    expect(state().analysis.forHuman).toMatchObject({ turnIndex: 1, played: "13/8 6/5", analysis: null, error: expect.stringMatching(/timed out/) });
+    expect(analysisForTurn(state(), 1)).toBeNull();
+    expect(canRoll(state())).toBe(true);
+  });
+
+  it("grades after the computer's reply with the busy flag already released, and clears the previous grade at commit", async () => {
+    await enter13_8_6_5();
+    engine.script("analyzePlay", analysis(PLAYS, 1));
+    await state().confirmPlay();
+    expect(state().analysis.forHuman?.turnIndex).toBe(1);
+
+    // Next turn: roll, enter the same play again, confirm.
+    engine.script("replay", match({ board: AFTER_13_8_6_5, phase: "toMove", dice: { hi: 5, lo: 1 } }));
+    engine.script("legalPlays", PLAYS);
+    await state().roll();
+    engine.script("applyPlay", AFTER_13_8, AFTER_13_8_6_5);
+    await state().selectPoint(13);
+    await state().selectPoint(8);
+    await state().selectPoint(6);
+    await state().selectPoint(5);
+    expect(canConfirm(state())).toBe(true);
+    engine.calls.length = 0;
+    engine.script("replay", match({ board: AFTER_13_8_6_5, onRoll: "black", phase: "toMove", dice: { hi: 6, lo: 3 } }));
+    engine.script("choosePlay", chosen(play("24/18 13/10", [24, 18], [13, 10])));
+    engine.script("replay", match({ board: AFTER_13_8_6_5, onRoll: "white", phase: "toRoll" }));
+    let seen: { forHuman: unknown; forBotTurn: number | undefined; busy: boolean } | null = null;
+    engine.script("analyzePlay", () => {
+      seen = { forHuman: state().analysis.forHuman, forBotTurn: state().analysis.forBot?.turnIndex, busy: state().ui.busy };
+      return analysis(PLAYS, 0);
+    });
+
+    await state().confirmPlay();
+
+    expect(engine.calls.map((c) => c.method)).toEqual(["replay", "choosePlay", "replay", "analyzePlay"]);
+    // While the grade was computed: the old grade was gone, the bot had already moved, and the table was free.
+    expect(seen).toEqual({ forHuman: null, forBotTurn: 5, busy: false });
+    expect(state().analysis.forHuman).toMatchObject({ turnIndex: 4, played: "13/8 6/5", analysis: analysis(PLAYS, 0) });
+    expect(engine.callsTo("analyzePlay")[0][5]).toBe(analysisSeedFor(state().record!, 4));
+    expect(analysisForTurn(state(), 1)).toEqual(analysis(PLAYS, 1));
+    expect(analysisForTurn(state(), 4)).toEqual(analysis(PLAYS, 0));
+  });
+
+  it("does not grade a play once a newer game has taken over", async () => {
+    engine.script("replay", match({ phase: "toMove", dice: { hi: 5, lo: 1 } }));
+    engine.script("legalPlays", PLAYS);
+    await state().newGame({ format: "single", level: "beginner", seed: SEED });
+    engine.script("applyPlay", AFTER_13_8, AFTER_13_8_6_5);
+    await state().selectPoint(13);
+    await state().selectPoint(8);
+    await state().selectPoint(6);
+    await state().selectPoint(5);
+    engine.script("replay", match({ board: AFTER_13_8_6_5, onRoll: "black", phase: "toMove", dice: { hi: 6, lo: 3 } }));
+    // The computer is "thinking" when a new game starts; the old chain must drop everything, its grade included.
+    let takeover: Promise<void> | null = null;
+    engine.script("choosePlay", () => {
+      takeover = state().newGame({ format: "single", level: "club", seed: SEED + 1 });
+      return chosen(play("24/18 13/10", [24, 18], [13, 10]));
+    });
+    engine.script("replay", match({ phase: "toMove", dice: { hi: 5, lo: 1 } }));
+    engine.script("legalPlays", PLAYS);
+
+    await state().confirmPlay();
+    await takeover;
+
+    expect(state().gameId).toBe(`local-${SEED + 1}`);
+    expect(state().record?.turns).toHaveLength(1);
+    expect(engine.callsTo("analyzePlay")).toHaveLength(0);
+    expect(state().analysis).toEqual({ forBot: null, forHuman: null, visible: true });
+    expect(state().ui.busy).toBe(false);
+  });
+
+  it("does not grade a forfeited turn (no legal move), nor cube actions", async () => {
+    engine.script("replay", match({ phase: "toMove", dice: { hi: 6, lo: 6 } }));
+    engine.script("legalPlays", [PASS]);
+    engine.script("replay", match({ onRoll: "black", phase: "toRoll" }));
+    engine.script("cubeAction", cube("noDouble"));
+    engine.script("replay", match({ onRoll: "black", phase: "toMove", dice: { hi: 3, lo: 1 } }));
+    engine.script("choosePlay", chosen(play("8/5 6/5", [8, 5], [6, 5])));
+    engine.script("replay", match({ onRoll: "white", phase: "toRoll" }));
+    await state().newGame({ format: "single", level: "beginner", seed: SEED });
+    expect(engine.callsTo("analyzePlay")).toHaveLength(0);
+    expect(state().analysis.forHuman).toBeNull();
+    expect(latestAnalysedSide(state())).toBe("bot");
+  });
+
+  it("starts a new game with the grades cleared but the drawer visibility kept", async () => {
+    await enter13_8_6_5();
+    engine.script("analyzePlay", analysis(PLAYS, 1));
+    await state().confirmPlay();
+    state().setAnalysisVisible(false);
+    engine.script("replay", match({ phase: "toMove", dice: { hi: 5, lo: 1 } }));
+    engine.script("legalPlays", PLAYS);
+
+    await state().newGame({ format: "single", level: "club", seed: SEED + 1 });
+
+    expect(state().analysis).toEqual({ forBot: null, forHuman: null, visible: false });
+    expect(state().analysisByTurn).toEqual({});
+  });
+
+  it("persists the drawer visibility under bg.analysis and reads it back for the next store", () => {
+    expect(state().analysis.visible).toBe(true);
+    state().setAnalysisVisible(false);
+    expect(storage.getItem(ANALYSIS_KEY)).toBe("0");
+    expect(createGameStore(new MockEngine(), { storage }).getState().analysis.visible).toBe(false);
+    state().setAnalysisVisible(true);
+    expect(storage.getItem(ANALYSIS_KEY)).toBe("1");
+    expect(createGameStore(new MockEngine(), { storage }).getState().analysis.visible).toBe(true);
+    storage.setItem(ANALYSIS_KEY, "garbage");
+    expect(createGameStore(new MockEngine(), { storage }).getState().analysis.visible).toBe(true);
+    // No storage at all: on by default, and toggling does not throw.
+    const detached = createGameStore(new MockEngine(), { storage: null });
+    expect(detached.getState().analysis.visible).toBe(true);
+    detached.getState().setAnalysisVisible(false);
+    expect(detached.getState().analysis.visible).toBe(false);
+  });
+
+  it("rememberAnalysis adds a review's analysis for a turn without overwriting an existing one", () => {
+    const first = analysis(PLAYS, 0);
+    const second = analysis(PLAYS, 2);
+    state().rememberAnalysis(4, first);
+    expect(analysisForTurn(state(), 4)).toEqual(first);
+    state().rememberAnalysis(4, second);
+    expect(analysisForTurn(state(), 4)).toEqual(first);
+    state().rememberAnalysis(6, second);
+    expect(Object.keys(state().analysisByTurn)).toEqual(["4", "6"]);
+  });
+
+  it("analysisSeedFor is the bot's seed for the record cut before the turn", () => {
+    const record: GameRecord = appendTurn(
+      { seed: 7, length: 0, rules: MONEY_RULES, turns: [] },
+      rollTurn("white", { hi: 3, lo: 1 }),
+      moveTurn("white", { hi: 3, lo: 1 }, "8/5 6/5"),
+      rollTurn("black", { hi: 6, lo: 2 }),
+    );
+    expect(analysisSeedFor(record, 1)).toBe(botSeed({ ...record, turns: record.turns.slice(0, 1) }));
+    expect(analysisSeedFor(record, 3)).toBe(botSeed(record));
+    expect(analysisSeedFor(record, 0)).not.toBe(analysisSeedFor(record, 1));
   });
 });
