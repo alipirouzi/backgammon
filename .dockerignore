@@ -8,6 +8,10 @@
 docs
 *.pem
 *.key
+# local environment files must never enter the build context (COPY web web)
+**/.env
+**/.env.*
+!**/.env.example
 # engine/ stays in the context (the Rust stage builds bg-wasm from it), but
 # locally generated binding artefacts do not: the image builds its own pkg.
 engine/bg-wasm/pkg

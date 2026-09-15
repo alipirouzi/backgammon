@@ -1,0 +1,534 @@
+/* Post-game review (plan Task 8; spec §5.2 "always available in post-game
+   review"). The page reads as a broadcast graphics package: a scoreboard
+   header (result in display type, one card per side with errors, blunders and
+   equity lost), the board before the turn on show with a transport under it,
+   the move list as a scrolling column, and the analysis panel with the
+   candidate table (components/analysis). Palette from the theme's --ui-*
+   tokens; the .action buttons and the candidate/grade styles come from
+   table.css and analysis.css: their layout tokens (--rule, --muted, --panel,
+   --cta-*) are re-declared on .review, the grade and probability colours
+   (--grade-*, --prob-*, --played) are theme tokens from styles/themes.css.
+   Motion only on transform and opacity, off under prefers-reduced-motion. */
+
+.review {
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --display-weight: 400;
+  --display-tracking: -0.02em;
+  --rule: color-mix(in oklab, var(--ui-fg) 14%, transparent);
+  --rule-strong: color-mix(in oklab, var(--ui-fg) 28%, transparent);
+  --muted: var(--ui-muted);
+  --panel: color-mix(in oklab, var(--ui-fg) 4%, transparent);
+  --panel-raised: color-mix(in oklab, var(--ui-fg) 8%, transparent);
+  --cta-bg: var(--ui-cta-bg);
+  --cta-fg: var(--ui-cta-fg);
+  --cta-radius: calc(var(--radius-board) / 2 + 2px);
+  --danger: #b3413a;
+  --table-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.7), 0 12px 24px -12px rgb(0 0 0 / 0.5);
+  --page-x: clamp(1rem, 3vw, 3rem);
+  --current: color-mix(in oklab, var(--ui-accent) 14%, transparent);
+
+  width: 100%;
+  max-width: 100rem;
+  margin-inline: auto;
+  padding: var(--space-4) var(--page-x) var(--space-8);
+  color: var(--ui-fg);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="broadcast"] .review {
+  --display-weight: 700;
+  --display-tracking: -0.04em;
+}
+[data-theme="editorial"] .review {
+  --table-shadow: 0 30px 60px -30px rgb(35 32 30 / 0.35), 0 8px 20px -12px rgb(35 32 30 / 0.25);
+}
+.review a.action { text-decoration: none; }
+
+/* Visually hidden: the page heading, captions, the live region. */
+.review__title,
+.review__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Loading / empty / error states -------------------------------------- */
+
+.review-notice {
+  margin: var(--space-7) 0;
+  text-align: center;
+  color: var(--muted);
+}
+.review-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  max-width: 36rem;
+  margin: var(--space-7) auto;
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-board);
+  background: var(--panel);
+}
+.review-empty__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking);
+}
+.review-empty__text {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Summary header (scoreboard) ------------------------------------------ */
+
+.review-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4) var(--space-6);
+  align-items: end;
+  padding-block: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--rule);
+  animation: review-rise var(--duration-slow) var(--ease-out-expo) both;
+}
+.review-summary__eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+}
+.review-summary__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--display-tracking);
+  text-wrap: balance;
+}
+.review-summary__score {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+}
+.review-summary__sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+/* Phones: one card per row, so the three figures keep their own columns. */
+@media (max-width: 37.5rem) {
+  .review-summary__sides { grid-template-columns: minmax(0, 1fr); }
+}
+.review-summary__foot {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+}
+.review-summary__progress {
+  display: flex;
+  flex: 1 1 22rem;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.review-summary__bar {
+  flex: 0 0 7rem;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--rule);
+}
+.review-summary__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--ui-accent);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left;
+  transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+.review-summary[data-complete="true"] .review-summary__bar-fill { background: var(--ui-accent); }
+.review-summary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Side cards: the two lower-thirds. */
+.side-card {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + 5px);
+  border: 1px solid var(--rule);
+  border-radius: var(--cta-radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+.side-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--side-colour, var(--rule-strong));
+}
+.side-card[data-player="white"] { --side-colour: var(--checker-white); }
+.side-card[data-player="black"] { --side-colour: var(--checker-black-edge); }
+.side-card__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.side-card__checker {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  box-shadow: var(--shadow-checker);
+}
+.side-card[data-player="white"] .side-card__checker {
+  background: var(--checker-white);
+  border: 1px solid var(--checker-white-edge);
+}
+.side-card[data-player="black"] .side-card__checker {
+  background: var(--checker-black);
+  border: 1px solid var(--checker-black-edge);
+}
+.side-card__figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.side-card__figure {
+  display: grid;
+  align-content: end;
+  gap: 0.1rem;
+}
+.side-card__figure dt {
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.side-card__figure dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: 1;
+  letter-spacing: var(--display-tracking);
+}
+.side-card__figure[data-kind="blunders"] dd { color: var(--grade-blunder); }
+.side-card__figure[data-kind="errors"] dd { color: var(--grade-error); }
+.side-card__plays {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+/* Player grid ------------------------------------------------------------ */
+
+.review-player__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "stage"
+    "analysis"
+    "turns";
+  gap: var(--space-5);
+  padding-top: var(--space-5);
+}
+.review-stage { grid-area: stage; }
+.review-turns { grid-area: turns; }
+.review-analysis { grid-area: analysis; }
+
+.review-stage__board {
+  border-radius: var(--radius-board);
+  box-shadow: var(--table-shadow);
+  transition: opacity var(--duration-fast) ease;
+}
+.review-stage__board[aria-busy="true"] { opacity: 0.6; }
+/* Nothing to show yet (a jump to a stop with no position cached and none shown before): the board's footprint, not a wrong position. */
+.review-stage__placeholder {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1000 / 700;
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-board);
+  background: var(--panel);
+  box-shadow: var(--table-shadow);
+  color: var(--muted);
+}
+.review-stage__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-3) 0 0;
+  color: var(--danger);
+}
+
+/* Transport ------------------------------------------------------------- */
+
+.transport {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "buttons slider"
+    "caption caption"
+    "hint hint";
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-4);
+}
+.transport__buttons {
+  grid-area: buttons;
+  display: flex;
+  gap: var(--space-1);
+}
+.transport__button {
+  min-width: 2.75rem;
+  padding: 0;
+  font-size: var(--text-sm);
+}
+.transport__slider {
+  grid-area: slider;
+  width: 100%;
+  height: 2.75rem;
+  margin: 0;
+  accent-color: var(--ui-accent);
+  cursor: pointer;
+}
+.transport__slider:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+.transport__caption {
+  grid-area: caption;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+/* Focus parks here when a transport button disables itself under focus (see ReviewPlayer). */
+.transport__caption:focus { outline: none; }
+.transport__caption:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.transport__count {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ui-accent-text);
+}
+.transport__text {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  letter-spacing: var(--display-tracking);
+}
+.transport__hint {
+  grid-area: hint;
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+/* Move list ------------------------------------------------------------- */
+
+.review-turns {
+  container: turns / inline-size;
+  border: 1px solid var(--rule);
+  border-radius: var(--cta-radius);
+  background: var(--panel);
+}
+.turns {
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  max-height: 24rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.turn {
+  display: grid;
+  grid-template-columns: 2.5ch max-content 3.5ch minmax(0, 1fr) auto;
+  grid-template-areas: "index who dice text grade";
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ui-fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+.turn:hover { background: var(--panel-raised); }
+.turn:focus-visible {
+  outline: 3px solid var(--ui-accent);
+  outline-offset: -3px;
+}
+.turn[aria-current="step"] {
+  background: var(--current);
+  box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+.turn__index {
+  grid-area: index;
+  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.turn__who {
+  grid-area: who;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.turn[data-player="white"] .turn__who { color: var(--ui-fg); }
+.turn__dice {
+  grid-area: dice;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+/* The notation is what the row is for: it wraps between moves (each move is a nowrap token), never ellipsizes. */
+.turn__text {
+  grid-area: text;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  line-height: var(--leading-tight);
+}
+.turn__token { white-space: nowrap; }
+.turn[data-player="black"] .turn__text { color: var(--muted); }
+.turn[aria-current="step"] .turn__text,
+.turn[aria-current="step"] .turn__who { color: var(--ui-fg); }
+.turn__grade {
+  grid-area: grade;
+  justify-self: end;
+}
+.turn__grade:empty { display: none; }
+.turn__pending {
+  display: inline-block;
+  min-width: 1.5em;
+  text-align: center;
+  color: var(--muted);
+}
+.turn--end {
+  grid-template-columns: 2.5ch minmax(0, 1fr);
+  grid-template-areas: "index text";
+  font-style: italic;
+}
+/* A narrow column (phones; the 900–1100px layout): the grade sits under the
+   notation, so the notation keeps its width instead of being squeezed. */
+@container turns (max-width: 24rem) {
+  .turn {
+    grid-template-columns: 2.5ch max-content 3.5ch minmax(0, 1fr);
+    grid-template-areas:
+      "index who dice text"
+      "index who dice grade";
+    row-gap: 0;
+  }
+  .turn__grade {
+    justify-self: start;
+    margin-top: var(--space-1);
+  }
+}
+
+/* Analysis panel -------------------------------------------------------- */
+
+.review-analysis {
+  /* Opaque equivalent of --panel over the page, for the candidate table's scroll cue (analysis.css). */
+  --cands-bg: color-mix(in oklab, var(--ui-fg) 4%, var(--ui-bg));
+
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--cta-radius);
+  background: var(--panel);
+  font-size: var(--text-sm);
+}
+.review-analysis__note {
+  margin: 0;
+  color: var(--muted);
+}
+.review-analysis__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  color: var(--danger);
+}
+.review-analysis .decision { animation: review-fade var(--duration-normal) ease both; }
+
+/* Wide: board and analysis on the left, the move list as a column on the right. */
+@media (min-width: 900px) {
+  .review-summary {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    padding-top: var(--space-5);
+  }
+  .review-player__grid {
+    /* The board stays the hero: the list takes 26rem only where a third of the viewport allows it. */
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, min(26rem, 34vw));
+    grid-template-areas:
+      "stage turns"
+      "analysis turns";
+    align-items: start;
+    column-gap: clamp(var(--space-4), 2.5vw, var(--space-6));
+  }
+  .review-turns {
+    position: sticky;
+    top: var(--space-4);
+  }
+  .turns { max-height: calc(100dvh - 3rem); }
+}
+
+@keyframes review-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes review-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review *,
+  .review *::before,
+  .review *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

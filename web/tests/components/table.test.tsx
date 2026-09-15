@@ -281,13 +281,14 @@ describe("<TableLayout>", () => {
     expect(screen.getByRole("heading", { name: "You win 1 point" })).toHaveFocus();
   });
 
-  it("keeps the board live and the drawer toggle a plain disabled control during play", async () => {
+  it("keeps the board live during play and offers the analysis drawer collapsed", async () => {
     await startWhiteToMove();
     const { container } = render(<TableLayout store={store} onPlayAgain={vi.fn()} />);
     expect(container.querySelector(".table__board")).not.toHaveAttribute("inert");
-    const toggle = screen.getByRole("button", { name: /^Open/ });
-    expect(toggle).toBeDisabled();
-    expect(toggle).not.toHaveAttribute("aria-disabled");
+    const toggle = screen.getByRole("button", { name: "Open" });
+    expect(toggle).toBeEnabled();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("tablist")).toBeNull();
   });
 
   it("labels resignation with the points the rules award: a gammon at a centred cube is a single under Jacoby", async () => {
@@ -377,6 +378,7 @@ describe("statusFor", () => {
     theme: "heritage",
     ui: { selectedFrom: null, legalTargets: [], pendingMoves: [], pendingBoard: null, legalPlays: null, busy: false, lastError: null, ...ui },
     analysis: { forBot: null, forHuman: null, visible: true },
+    analysisByTurn: {},
     lastGameResult: null,
     awaitingNextGame: false,
   });

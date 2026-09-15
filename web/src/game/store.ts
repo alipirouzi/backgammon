@@ -12,6 +12,10 @@
  *
  * Every action resolves after the bot has answered (roll → move, or a cube
  * decision), under one `ui.busy` flag; nothing here throws to React.
+ * `confirmPlay` additionally grades the person's play (club-strength
+ * `analyzePlay`) *after* the bot's reply, with `busy` already released: the
+ * worker is sequential, so a grade ahead of the reply would hold the
+ * computer up for as long as the analysis takes.
  *
  * `newGame` may arrive while a previous game's bot chain is still awaiting
  * the engine (the store outlives the route). It always wins: a generation
@@ -32,6 +36,7 @@ import type {
   Dice,
   GameResult,
   Level,
+  MatchContext,
   MatchState,
   Move,
   MoveAnalysis,
@@ -47,9 +52,11 @@ import {
   DEFAULT_THEME,
   defaultStorage,
   loadLocalGame,
+  loadLocalGameLevel,
   loadTheme,
   localGameId,
   saveLocalGame,
+  saveLocalGameLevel,
   saveTheme,
   type StorageLike,
 } from "./local-games";
@@ -97,6 +104,11 @@ export type GameFormat = "single" | { matchTo: number };
 export interface NewGameOptions {
   /** Ignored when a record for `seed` is already stored: that record is the game the id names. */
   format: GameFormat;
+  /**
+   * The computer's level for a new game, recorded under `bg.games.<id>.level`.
+   * A stored record is resumed at the level it was started at; this option
+   * only applies (and is then recorded) when the record carries none.
+   */
   level: Level;
   /** Dice seed (`0..=2^53-1`); a fresh random one when omitted. */
   seed?: number;
@@ -128,11 +140,33 @@ export interface BotAnalysis {
   chosen: ChosenPlay;
 }
 
+/**
+ * The engine's club-strength verdict on the person's last confirmed play
+ * (`analyzePlay`, run once the bot has answered the move; `null` from the
+ * moment the move is committed until the grade lands). `analysis` is `null`
+ * with `error` set when the analysis itself failed; the game goes on
+ * regardless — the failure is shown in the drawer, never in `ui.lastError`.
+ */
+export interface HumanAnalysis {
+  /** Index of the person's move turn in `record.turns`. */
+  turnIndex: number;
+  player: Player;
+  dice: Dice;
+  /** The notation played (relative to `player`). */
+  played: string;
+  analysis: MoveAnalysis | null;
+  error: string | null;
+}
+
 export interface GameAnalysis {
   forBot: BotAnalysis | null;
-  forHuman: MoveAnalysis | null;
+  forHuman: HumanAnalysis | null;
+  /** The analysis drawer is on (spec §5.2: on by default in bot games); persisted under `bg.analysis`. */
   visible: boolean;
 }
+
+/** Club-strength `MoveAnalysis` per move turn, keyed by the turn's index in `record.turns`. */
+export type AnalysisByTurn = Readonly<{ [turnIndex: number]: MoveAnalysis }>;
 
 /** The store's data (what selectors read). */
 export interface GameStoreState {
@@ -147,6 +181,14 @@ export interface GameStoreState {
   theme: ThemeId;
   ui: GameUi;
   analysis: GameAnalysis;
+  /**
+   * Every club-strength analysis computed for this game so far, by turn
+   * index: the person's confirmed plays as they are graded, plus whatever a
+   * review adds with `rememberAnalysis`. Reset by `newGame`. The bot's own
+   * `choosePlay` output is *not* here (at beginner/intermediate it is 1-ply,
+   * noisy and not comparable); it stays in `analysis.forBot`.
+   */
+  analysisByTurn: AnalysisByTurn;
   /**
    * Result of the last finished game: taken from `game.result` while the
    * finished game is shown, or derived from the score change when `replay`
@@ -187,7 +229,10 @@ export interface GameStoreActions {
   /** Starts the next game of a match once its predecessor's result has been shown (`awaitingNextGame`). */
   nextGame(): Promise<void>;
   setTheme(t: ThemeId): void;
+  /** Shows or hides the analysis drawer; persisted under `bg.analysis`. */
   setAnalysisVisible(visible: boolean): void;
+  /** Adds a lazily computed analysis (the review page) to `analysisByTurn`; an existing entry is kept. */
+  rememberAnalysis(turnIndex: number, analysis: MoveAnalysis): void;
 }
 
 export type GameStore = GameStoreState & GameStoreActions;
@@ -208,6 +253,52 @@ const EMPTY_UI: GameUi = {
 };
 
 const EMPTY_ANALYSIS: GameAnalysis = { forBot: null, forHuman: null, visible: true };
+const NO_ANALYSES: AnalysisByTurn = Object.freeze({});
+
+/** `localStorage` key of the analysis drawer's visibility (`"1"` on, `"0"` off). */
+export const ANALYSIS_KEY = "bg.analysis";
+
+/** The persisted drawer visibility, or `null` when nothing (usable) is stored. */
+export function loadAnalysisVisible(storage: StorageLike | null = defaultStorage()): boolean | null {
+  try {
+    const value = storage?.getItem(ANALYSIS_KEY) ?? null;
+    return value === "1" ? true : value === "0" ? false : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Persists the drawer visibility; returns `false` when storage is unavailable. */
+export function saveAnalysisVisible(visible: boolean, storage: StorageLike | null = defaultStorage()): boolean {
+  try {
+    storage?.setItem(ANALYSIS_KEY, visible ? "1" : "0");
+    return storage !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The seed `analyzePlay` is given for the move turn at `turnIndex` of
+ * `record`: `botSeed` of the record as it stood *before* that turn (the same
+ * derivation as the bot's own decisions), so a later analysis of the same
+ * turn — the review page, another session — reproduces the rollouts the
+ * person saw during play. `turnIndex` may exceed the turns present.
+ */
+export function analysisSeedFor(record: GameRecord, turnIndex: number): number {
+  return botSeed({ ...record, turns: record.turns.slice(0, turnIndex) });
+}
+
+/** What `analyzePlay` needs about a play, captured before the move is committed (the board changes with it). */
+interface PlayToGrade {
+  turnIndex: number;
+  board: Board;
+  player: Player;
+  dice: Dice;
+  matchCtx: MatchContext;
+  played: string;
+  seed: number;
+}
 
 /** Upper bound on consecutive automatic turns (bot actions, passes, new games) per user action. */
 const MAX_AUTO_STEPS = 64;
@@ -298,6 +389,32 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
       if (gameId) {
         saveLocalGame(gameId, next, storage);
       }
+    };
+
+    /**
+     * Grades the person's play with the engine's club analysis and records
+     * it for the drawer (`analysis.forHuman`) and the review (`analysisByTurn`).
+     * A failure is reported there, not in `ui.lastError`: the move is already
+     * committed and the game must go on without its grade. Runs outside the
+     * busy flag (see `confirmPlay`); a grade that lands after a newer game
+     * took over is dropped. Never throws.
+     */
+    const gradePlay = async (gen: number, play: PlayToGrade): Promise<void> => {
+      let analysis: MoveAnalysis | null = null;
+      let error: string | null = null;
+      try {
+        analysis = await engine.analyzePlay(play.board, play.player, play.dice, play.matchCtx, play.played, play.seed);
+      } catch (failure) {
+        error = errorMessage(failure);
+      }
+      if (gen !== generation) {
+        return;
+      }
+      const { turnIndex, player, dice, played } = play;
+      set((prev) => ({
+        analysis: { ...prev.analysis, forHuman: { turnIndex, player, dice, played, analysis, error } },
+        analysisByTurn: analysis ? { ...prev.analysisByTurn, [turnIndex]: analysis } : prev.analysisByTurn,
+      }));
     };
 
     /**
@@ -433,7 +550,8 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
       botLevel: "beginner",
       theme: loadTheme(storage) ?? DEFAULT_THEME,
       ui: EMPTY_UI,
-      analysis: EMPTY_ANALYSIS,
+      analysis: { ...EMPTY_ANALYSIS, visible: loadAnalysisVisible(storage) ?? EMPTY_ANALYSIS.visible },
+      analysisByTurn: NO_ANALYSES,
       lastGameResult: null,
       awaitingNextGame: false,
 
@@ -447,6 +565,12 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
           const resumed = stored !== null && stored.seed === seed && stored.turns.length > 0 ? stored : null;
           const length = opts.format === "single" ? 0 : opts.format.matchTo;
           const record = resumed ?? newRecord(seed, length);
+          // A resumed game keeps the level it was started at; a record without
+          // one (stored before levels were kept) takes the option's and records
+          // it. Written before anything is awaited so even a failed replay
+          // leaves the level on record.
+          const level = (resumed ? loadLocalGameLevel(gameId, storage) : null) ?? opts.level;
+          saveLocalGameLevel(gameId, level, storage);
           rng = null;
           pendingBoardStack = [];
           set({
@@ -454,8 +578,9 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
             match: null,
             record,
             seatOf: { white: "human", black: "bot" },
-            botLevel: opts.level,
+            botLevel: level,
             analysis: { ...EMPTY_ANALYSIS, visible: get().analysis.visible },
+            analysisByTurn: NO_ANALYSES,
             lastGameResult: null,
             awaitingNextGame: false,
             ui: { ...EMPTY_UI, busy: true },
@@ -527,8 +652,10 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
         setUi({ pendingMoves, pendingBoard, selectedFrom: null, legalTargets: [] });
       },
 
-      confirmPlay: () =>
-        run(async (gen) => {
+      confirmPlay: async () => {
+        /** Set once the move is committed: what to grade, and the generation it belongs to. */
+        const graded: { pending: { gen: number; play: PlayToGrade } | null } = { pending: null };
+        await run(async (gen) => {
           const s = get();
           const unblocked = { ...s, ui: { ...s.ui, busy: false } };
           const play = completedPlay(unblocked);
@@ -536,9 +663,32 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
             return;
           }
           const g = s.match!.game;
+          const record = s.record!;
+          const toGrade: PlayToGrade = {
+            turnIndex: record.turns.length,
+            board: g.board,
+            player: g.onRoll!,
+            dice: g.dice!,
+            matchCtx: matchContextFor(s.match!, g.onRoll!),
+            played: play.notation,
+            seed: analysisSeedFor(record, record.turns.length),
+          };
           await commit(gen, moveTurn(g.onRoll!, g.dice!, play.notation), null);
+          // The previous grade was about a play that is no longer the last one.
+          set((prev) => ({ analysis: { ...prev.analysis, forHuman: null } }));
+          graded.pending = { gen, play: toGrade };
           await advance(gen);
-        }),
+        });
+        // Graded once the computer has answered and the table is free again:
+        // the worker is sequential, so a club-strength analysis ahead of the
+        // bot's reply would hold the reply up for as long as it takes. The
+        // seed was fixed before the commit, so the grade is the same either
+        // way. A run overtaken by a newer game grades nothing — its analysis
+        // would only sit in the queue ahead of the new game's opening.
+        if (graded.pending !== null && graded.pending.gen === generation) {
+          await gradePlay(graded.pending.gen, graded.pending.play);
+        }
+      },
 
       double: () => {
         const s = get();
@@ -592,7 +742,13 @@ export function createGameStore(engine: Engine, options: GameStoreOptions = {}):
         saveTheme(theme, storage);
       },
 
-      setAnalysisVisible: (visible) => set((s) => ({ analysis: { ...s.analysis, visible } })),
+      setAnalysisVisible: (visible) => {
+        set((s) => ({ analysis: { ...s.analysis, visible } }));
+        saveAnalysisVisible(visible, storage);
+      },
+
+      rememberAnalysis: (turnIndex, analysis) =>
+        set((s) => (turnIndex in s.analysisByTurn ? {} : { analysisByTurn: { ...s.analysisByTurn, [turnIndex]: analysis } })),
     };
   });
 }

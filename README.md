@@ -23,23 +23,30 @@ computer** in the browser: a landing page with a board-theme chooser, a
 new-game form (single game or match to 3/5/7 at three levels), and the Table
 screen — an SVG board in three themes, player cards, action bar, status line —
 driven by the engine running in a Web Worker (see [Web app](#web-app)). The
-analysis drawer, post-game review and server-side persistence of finished
-games are `(planned)` (the second Play PR); multiplayer, members and
-languages follow.
+**analysis drawer** under the board grades every play you make and shows the
+computer's candidates; a finished game opens in the **post-game review**, turn
+by turn with grades; and a finished bot game is posted to the server,
+re-verified by replaying its record through the engine in Node, and stored in
+PostgreSQL (see **Analysis drawer**, **Review** and **Persistence** under
+[Web app](#web-app)). Multiplayer, members and languages follow.
 
 Delivery order (spec section 9); each piece gets its own spec, plan, and PRs:
 
 1. Foundation — done
 2. Engine — this repository state: `bg-core` (rules, plays, notation, game and match state, records, test vectors), `bg-bot` (evaluator, match equity table, club bot with three levels, rollouts, cube decisions, analysis output, decision vectors), `bg-wasm` and `bg-node` (JSON bindings with parity tests, wired into CI and the image build)
-3. Play — board, three themes, bot games: this repository state (PR D); analysis drawer, post-game review, persistence of finished games `(planned)` (PR E)
+3. Play — board, three themes, bot games (PR D); analysis drawer, post-game review, persistence of finished games (`POST /api/games`, Prisma + PostgreSQL, migrations at container start) (PR E): this repository state
 4. Multiplayer `(planned)` — invite links, seat claiming, realtime process, chat, optional clocks
 5. Members `(planned)` — magic-link login, profiles, leagues, Glicko-2, scoreboard
 6. Languages `(planned)` — fa/tr/de/fr translations, RTL, rules guide
 
 Routes today: `GET /` is the landing page (its `<main>` keeps
 `id="board-mount"`, which the deploy pipeline checks); `GET /play/new` the
-new-game form; `GET /play/local-<seed>` a bot game; `GET /health` returns
-`200 {"status":"ok"}`. Security headers are set in `web/next.config.ts`;
+new-game form; `GET /play/local-<seed>` a bot game; `GET
+/review/<gameId>?level=<level>` the post-game review of a finished game (a
+`local-<seed>` id from this browser's storage, a server id through the API);
+`POST /api/games` stores a finished bot game and `GET /api/games/<id>` reads
+it back (see **Persistence** under [Web app](#web-app)); `GET /health`
+returns `200 {"status":"ok"}`. Security headers are set in `web/next.config.ts`;
 `X-Powered-By` is disabled. The Content-Security-Policy is sent as
 `Content-Security-Policy-Report-Only`: enforcing it needs per-request nonces
 for Next's inline hydration scripts and for the root layout's inline theme
@@ -82,15 +89,22 @@ backgammon/
 │   └── vectors/                     generated test vectors shared with the bindings (README inside)
 ├── web/                             Next.js app (pnpm workspace member; depends on `bg-wasm`)
 │   ├── src/app/                     layout.tsx (theme bootstrap + header), page.tsx (landing, #board-mount), health/route.ts,
-│   │                                play/new/ (form), play/[gameId]/ (the table), play/game-options.ts (URL contract)
+│   │                                play/new/ (form), play/[gameId]/ (the table, posts finished games), play/game-options.ts (URL contract),
+│   │                                review/[gameId]/ (post-game review), api/games/ (route.ts POST, [id]/route.ts GET)
 │   ├── src/engine/                  protocol.ts, worker.ts, sync.ts, client.ts (Engine, MockEngine), node.ts, types.ts
-│   ├── src/game/                    store.ts (Zustand), selectors.ts, record.ts, dice.ts, local-games.ts
+│   ├── src/game/                    store.ts (Zustand), selectors.ts, record.ts, dice.ts, local-games.ts, persist.ts (post once)
 │   ├── src/components/              board/ (geometry, Board + parts, board.css), table/ (TableLayout, PlayerCard, ActionBar,
-│   │                                StatusLine), theme/ (SiteHeader, ThemeSwitch, useTheme), landing/
+│   │                                StatusLine), analysis/ (AnalysisDrawer, CandidateList, ProbBar, GradeBadge, MoveList, format),
+│   │                                review/ (ReviewPlayer, ReviewSummary, game-source, model), theme/ (SiteHeader, ThemeSwitch, useTheme), landing/
+│   ├── src/server/                  db.ts (Prisma client), games.ts (verify + store), validate.ts, rate-limit.ts — server-only
 │   ├── src/styles/                  tokens.css, themes.css (the three [data-theme] palettes)
-│   ├── tests/                       Vitest: engine-parity, engine-client, engine-node, store, store-engine, record, dice,
-│   │                                geometry, game-options, landing-theme, health, components/*.test.tsx (jsdom)
-│   └── e2e/                         Playwright: landing.spec.ts, bot-game.spec.ts, themes.spec.ts (screenshot matrix)
+│   ├── prisma/                      schema.prisma (Game, GameSeat), migrations/ (applied by the container entrypoint)
+│   ├── tests/                       Vitest: engine-parity, engine-client, engine-node, store, store-engine, record, dice, geometry,
+│   │                                game-options, landing-theme, health, play-game, play-game-persist, persist, api-games, api-routes,
+│   │                                rate-limit, server-games.integration (needs DATABASE_URL), fixtures/, components/*.test.tsx (jsdom)
+│   ├── e2e/                         Playwright: landing, bot-game, match, themes (screenshot matrix), review, api-games (needs DATABASE_URL)
+│   ├── docker-compose.dev.yml       PostgreSQL 16 for local development and tests (127.0.0.1:5439); never deployed
+│   └── .env.example                 DATABASE_URL for that database (copy to web/.env, gitignored)
 ├── deploy/
 │   ├── docker-compose.prod.yml      app + postgres on the host
 │   ├── backgammon.caddy             per-site Caddy snippet
@@ -106,7 +120,7 @@ backgammon/
 - Node 22 (`.nvmrc`) and pnpm 9 (`packageManager` in `package.json`; `corepack enable` provides it)
 - Rust via rustup; `engine/rust-toolchain.toml` pins 1.98.0 with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target; run `rustup toolchain install` inside `engine/` once (cargo's auto-install still works but rustup reports it as deprecated)
 - wasm-pack 0.15.0 (`cargo install wasm-pack --version 0.15.0`, or the release tarball CI and the Dockerfile download: `wasm-pack-v0.15.0-<arch>.tar.gz` from `github.com/wasm-bindgen/wasm-pack/releases`). Locally it fetches wasm-bindgen-cli 0.2.127 and binaryen (`wasm-opt`) on first use, so the first build needs network access; CI and the Dockerfile install both from pinned, sha256-verified tarballs and build with `--mode no-install` instead.
-- Docker (Compose v2) for the image build and smoke test
+- Docker (Compose v2) for the image build and smoke test, and for the local PostgreSQL 16 the API, its integration test and the API e2e need (`web/docker-compose.dev.yml`)
 
 ## Run
 
@@ -115,6 +129,32 @@ wasm-pack build engine/bg-wasm --target bundler --release --out-dir pkg --out-na
 pnpm install
 pnpm --filter web dev          # http://localhost:3000
 ```
+
+Playing needs no database. Saving finished games (`POST /api/games`) and
+reviewing a game by server id do: start the development PostgreSQL 16
+(`web/docker-compose.dev.yml`: `postgres:16-alpine` as container
+`bg-dev-postgres` on `127.0.0.1:5439`, user/database `backgammon`, the
+throwaway password `dev`, a named volume; development only — production is
+`deploy/docker-compose.prod.yml`), point `DATABASE_URL` at it, apply the
+migrations once, then run the dev server with the variable set:
+
+```bash
+docker compose -f web/docker-compose.dev.yml up -d --wait
+export DATABASE_URL=postgresql://backgammon:dev@127.0.0.1:5439/backgammon   # as in web/.env.example
+pnpm --filter web prisma:migrate:deploy   # applies web/prisma/migrations (prisma migrate deploy; prints "No pending migrations to apply." when current)
+pnpm --filter web dev
+```
+
+`web/.env.example` holds the same `DATABASE_URL`; copied to `web/.env`
+(gitignored, and excluded from the Docker build context) it is read by `next
+dev`/`next start` and by the Prisma CLI, but not by Vitest or Playwright — the
+tests need the variable exported in the shell as above. `pnpm --filter web
+prisma:generate` regenerates the client after a schema change (`build` and
+`typecheck` run it themselves; `migrate deploy` does not). Without
+`DATABASE_URL` the app still serves every page; only the two API routes answer
+500, and the browser reports "could not be saved" under the table and tries
+again the next time the game is opened. `docker compose -f
+web/docker-compose.dev.yml down -v` removes the database again, data included.
 
 Playing locally: open http://localhost:3000, pick a board under "Choose your
 board" (persisted in `localStorage` as `bg.theme`; the header switch on the
@@ -137,11 +177,42 @@ succeeds. Every roll comes from the seed: `/play/new?seed=42` pins the dice,
 so a game can be replayed exactly, and a bare `/play/local-42` opens the
 opening position with the defaults (single game, intermediate). The record
 of a game is saved after every accepted turn under `localStorage`
-`bg.games.local-<seed>`; reopening the URL resumes that record — an
+`bg.games.local-<seed>`, and the level it was started at under
+`bg.games.local-<seed>.level`; reopening the URL resumes that record — an
 unfinished game continues from its last turn (the dice stream is rebuilt
-from the record; `format`/`level` in the URL are ignored for a stored id), a
-finished one is shown finished. Only an id with nothing stored starts a new
-game.
+from the record), a finished one is shown finished. For a stored id the
+format comes from the record and the level from the stored level, so
+`format`/`level` in the URL are ignored; only a record stored without a
+level (older games) takes the URL's level, and records it. Only an id with
+nothing stored starts a new game. (The page heading still names the URL's
+level; the table's caption, the computer's play and the saved game follow
+the stored one.)
+
+Under the board, the **analysis drawer** (on by default; "Hide analysis" /
+"Show analysis" in its strip, remembered as `bg.analysis`) shows one line
+while collapsed — the grade of your last play ("Fine: your 24/18 13/10 lost
+0.012") and what the computer chose with its ranking equity and candidate
+count — and opens, with the toggle or its grab handle on a phone, into three
+tabs: Analysis (both decisions as candidate tables: notation, equity, Δ to
+the best play, a win/gammon/backgammon bar, and the rollout sample as
+`n=100 ±0.011` or `1-ply`), Moves (the record with a grade pill on every
+graded play) and Chat `(planned)`, disabled. Grades follow the engine's
+club-strength analysis whatever level the computer plays at, and are
+announced through a polite live region. Your play is graded after the
+computer's reply, not before it: the engine worker takes one request at a
+time, so a club-strength analysis ahead of the reply would hold the computer
+up for as long as the analysis takes (up to a couple of seconds on a phone).
+Until the grade lands the strip shows the computer's move alone, and an
+action taken in the meantime queues behind the analysis. After the finish, "Review this game"
+in the banner opens `/review/local-<seed>?level=<level>`: the summary names
+the result and, per side, errors, blunders and equity lost; the transport
+(first/previous/next/last, a slider, ← → Home End anywhere on the page, or a
+click in the move list) shows the position before each turn with the played
+move's destinations highlighted and the analysis of that turn — grades
+computed during play are taken over from the table, the rest (the
+computer's plays included) are graded in the background in the review's own
+engine worker with the same seed the game used, until "n of n plays graded".
+Cube decisions are shown as stops but not graded `(planned)`.
 
 ## Test
 
@@ -149,14 +220,17 @@ game.
 pnpm --filter bg-node build                # napi build --platform --release -> engine/bg-node/{bg-node.<platform>.node, index.js, index.d.ts}; root `pnpm test` needs it
 pnpm test                                  # all workspace packages: web Vitest (web/tests/engine-parity.test.ts checks bg-wasm against engine/vectors and skips with a banner when engine/bg-wasm/pkg is not built) and bg-node's node:test parity test
 pnpm --filter web exec playwright install chromium   # once, before the first e2e run
-pnpm --filter web build && pnpm --filter web test:e2e   # Playwright against `next start` (started by playwright.config.ts): landing + /health, a whole bot game, the screenshot matrix
+pnpm --filter web build && pnpm --filter web test:e2e   # Playwright against `next start` (started by playwright.config.ts); the six specs are listed below
 cd engine && cargo test                    # Rust (~40 s in debug; bg-core's oracle property tests dominate; the full decision-vector drift tests run in release only)
 cd engine && cargo test --release -p bg-bot -p bg-wasm --test perf --test vectors -- --include-ignored --show-output   # as CI runs them: perf (mean of 10 club decisions < 700 ms natively), full drift test, and every decisions.json entry through bg-wasm's JSON layer (the debug `cargo test` runs a subset)
 ```
 
 End-to-end (`web/e2e`, Playwright, Chromium only; `playwright.config.ts`
 starts `pnpm start` on 127.0.0.1:3000 and waits for `/health`, so `pnpm
---filter web build` must have run):
+--filter web build` must have run; the server inherits `DATABASE_URL`, so
+with the development database up and the variable exported the finished
+games of the suite are posted for real and `api-games.spec.ts` runs — without
+it that file is skipped and the others still pass):
 
 - `landing.spec.ts` — `/health` answers `{"status":"ok"}`; `/` renders
   `#board-mount` and the `Backgammon` heading.
@@ -175,10 +249,29 @@ starts `pnpm start` on 127.0.0.1:3000 and waits for `/health`, so `pnpm
   data-theme>` and that the computed `--board-felt` differs across the three
   themes at every width. CI uploads the folder as the `screens` artifact on
   every run (`web/test-results/` is gitignored).
+- `match.spec.ts` — the first game of a match to 3 through "Next game".
+- `review.spec.ts` — the seeded beginner game to the finish, "Review this
+  game", the summary, one step to White's first play (its grade badge and
+  candidate table come from the table's hand-over), a click on the
+  computer's first play (graded lazily in the review), the "n of n plays
+  graded" progress, End, "Back to table"; then a stored record at 375 px
+  with lazily computed grades and no horizontal overflow; and the "No such
+  game" notice. Saves `review-1280.png` and `review-375.png` next to the
+  screenshot matrix.
+- `api-games.spec.ts` — the API against the real server and database
+  (skipped without `DATABASE_URL`, always run in CI): invalid JSON, a body
+  without seats, a malformed and an unfinished record are `400 { error }`; a
+  fixture record is `201 { id }` and comes back from `GET /api/games/<id>`
+  as exactly `{ record, result, seats }` with `Cache-Control: no-store`;
+  unknown ids are `404`; and a finished game reopened in the browser is
+  posted once (`bg.games.<id>.posted` = `{"serverId": …}`, no save note, the
+  marker unchanged after a reload).
 
 Full local gate (CI additionally runs `pnpm test -- --coverage`). Order
 matters twice: `wasm-pack build` before `pnpm install`, and `pnpm --filter
-bg-node build` before the root `pnpm test`:
+bg-node build` before the root `pnpm test`; the database is up and
+`DATABASE_URL` exported before `pnpm test`, so the integration test runs
+rather than skips:
 
 ```bash
 (cd engine && cargo fmt --check && cargo clippy --all-targets -- -D warnings \
@@ -186,10 +279,15 @@ bg-node build` before the root `pnpm test`:
      && cargo test --release -p bg-bot -p bg-wasm --test perf --test vectors -- --include-ignored \
      && cargo build --target wasm32-unknown-unknown -p bg-core -p bg-bot -p bg-wasm) \
  && wasm-pack build engine/bg-wasm --target bundler --release --out-dir pkg --out-name bg_wasm \
- && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck \
+ && pnpm install --frozen-lockfile \
+ && docker compose -f web/docker-compose.dev.yml up -d --wait \
+ && export DATABASE_URL=postgresql://backgammon:dev@127.0.0.1:5439/backgammon \
+ && pnpm --filter web prisma:migrate:deploy \
+ && pnpm lint && pnpm typecheck \
  && pnpm --filter bg-node build && pnpm --filter bg-node test && pnpm test && pnpm build \
  && pnpm --filter web test:e2e \
- && docker build --platform linux/amd64 -t backgammon:local .
+ && docker build --platform linux/amd64 -t backgammon:local . \
+ && docker compose -f web/docker-compose.dev.yml down -v
 ```
 
 Notes:
@@ -198,7 +296,9 @@ Notes:
 - Root `pnpm test` and `pnpm build` are `pnpm -r`, so they include `bg-node` (`node --test` and `napi build --release`); `pnpm test` therefore fails with a module-not-found error until the addon has been built once.
 - CI runs `pnpm test -- --coverage`. A coverage threshold is `(planned)`; none is enforced yet.
 - `docker build --platform linux/amd64` matches `deploy.yml` (the host is amd64). On an Apple-silicon machine the Rust stage then runs emulated; the `wasm-pack build` step took about 50 s there.
-- Image smoke test: `docker run -d --rm --name bg-smoke -p 3999:3000 backgammon:local`, then `curl -fsS http://127.0.0.1:3999/health` (expect `{"status":"ok"}`), `curl -fsS http://127.0.0.1:3999/ | grep -c 'id="board-mount"'` and `curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:3999/play/new` (expect `200`); `docker rm -f bg-smoke` afterwards.
+- `web/tests/server-games.integration.test.ts` (verify-and-store round trip through a real PostgreSQL) runs only when `DATABASE_URL` is set and the migrations are applied — see [Run](#run); it is skipped otherwise, so a plain `pnpm test` needs no database, and it fails under `CI` when it cannot run (the `web` job provides the database). `web/tests/api-routes.test.ts` covers the two route handlers with the service mocked (status codes, error mapping, the 30/min rate limit, the 2 MiB cap counted in bytes on a chunked body, 404); `web/tests/api-games.test.ts` the service with Prisma mocked and the real engine replaying the fixture records in `web/tests/fixtures/` (including the one-guest-one-bot seat rule); `web/tests/rate-limit.test.ts` the limiter (sliding window, bounded table, IPv6 /64 keys); `web/tests/local-games.test.ts` the stored level beside a local record.
+- CI's `web` job runs a `postgres:16-alpine` service container (user/database `backgammon`, a throwaway password, port 5439 like the development compose), sets `DATABASE_URL` for the whole job and runs `pnpm prisma:migrate:deploy` right after `pnpm install`, so the integration test, the API e2e and the game posts of the other e2e specs go through a real database on every push.
+- Image smoke test: the container needs a database (its entrypoint runs the migrations and refuses to start without `DATABASE_URL`), so run it with a throwaway compose file: services `app` (`image: backgammon:local`, `DATABASE_URL: postgresql://backgammon:${POSTGRES_PASSWORD}@postgres:5432/backgammon`, `ports: ["127.0.0.1:3999:3000"]`, `depends_on: postgres: condition: service_healthy`) and `postgres` (`postgres:16-alpine` with `POSTGRES_USER/PASSWORD/DB` and a `pg_isready` healthcheck), `.env` with a made-up `POSTGRES_PASSWORD`. `docker compose up -d`, wait for `curl -fsS http://127.0.0.1:3999/health` (expect `{"status":"ok"}`; the app log shows `Applying migration 20260914130432_init` on the first start and `No pending migrations to apply.` on later ones), `curl -fsS http://127.0.0.1:3999/ | grep -c 'id="board-mount"'`, `curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:3999/play/new` (expect `200`), then post a fixture: `jq '{record: ., seats: {white: {kind: "guest", name: "Player One"}, black: {kind: "bot", level: "beginner"}}}' web/tests/fixtures/finished-record.json | curl -sS -H 'content-type: application/json' --data @- http://127.0.0.1:3999/api/games` (expect `201 {"id": …}`) and `curl -fsS http://127.0.0.1:3999/api/games/<id>` (expect `{record, result, seats}`); `docker compose down -v` afterwards. A bare `docker run --rm backgammon:local` exits with `DATABASE_URL is required`, by design.
 - `pnpm --filter web test:e2e` runs `next start`, which warns that it "does not work with output: standalone"; for the e2e the plain server is fine (the image runs `node web/server.js` from the standalone output).
 
 ## Engine
@@ -447,9 +547,9 @@ build` = `napi build --platform --release`) into
 `engine/bg-node/bg-node.<platform>.node` with `index.js`/`index.d.ts`
 (all gitignored; targets `x86_64-unknown-linux-gnu`, `aarch64-apple-darwin`,
 `x86_64-apple-darwin`). CI builds and tests it on every push; it is **not**
-part of the Docker image — it ships with the realtime process `(planned)`,
-at which point the runtime image moves from `node:22-alpine` to
-`node:22-bookworm-slim` (glibc for the addon) `(planned)`.
+part of the Docker image — it ships with the realtime process `(planned)`;
+the runtime image is already `node:22-bookworm-slim` (glibc), so the addon
+will run there unchanged.
 
 Parity tests, all against the committed `engine/vectors` (`plays.json`: 141
 legal-play entries; `decisions.json`: 30 bot decisions with candidate
@@ -503,9 +603,24 @@ Build integration:
   `pnpm install --frozen-lockfile`. `.dockerignore` keeps `engine/` in the
   context but excludes `**/target`, `engine/bg-wasm/pkg` and the bg-node
   artefacts, so the image always builds its own package. The three tool
-  downloads need network access to GitHub in CI and in the image build; the
-  runtime stage is unchanged (`node:22-alpine`, non-root `app`, `HEALTHCHECK`
-  on `/health`).
+  downloads need network access to GitHub in CI and in the image build. The
+  Node stages are `node:22-bookworm-slim` (Debian 12, glibc, OpenSSL 3, one
+  base for build and runtime so Prisma's query engine — generated for
+  `native` plus the explicit `debian-openssl-3.0.x` target in
+  `web/prisma/schema.prisma` — matches); the runtime stage adds `openssl`
+  (Prisma's engines link against libssl3), a non-root `app` user, a
+  `HEALTHCHECK` on `/health` via node's `fetch` (no wget in the slim
+  image), and, besides the standalone output, `web/prisma` (schema +
+  migrations), the Prisma CLI installed flat with npm in a `prisma-cli`
+  stage (the workspace's copy is pnpm symlinks) and `engine/bg-wasm/pkg` at
+  `web/node_modules/bg-wasm`, where `web/src/engine/node.ts` looks for it —
+  the route handler imports the engine by file URL at runtime, which Next's
+  output tracing does not follow. `ENTRYPOINT` is
+  `web/scripts/docker-entrypoint.sh`: it refuses to start without
+  `DATABASE_URL`, runs `prisma migrate deploy` (idempotent; the image starts
+  against an empty database and a current one alike) and `exec`s the `CMD`
+  (`node web/server.js`). The image is about 520 MB (was 220 MB on Alpine:
+  Debian base plus the Prisma CLI and engines).
 
 ## Web app
 
@@ -570,26 +685,122 @@ jsdom for component tests, Playwright for e2e.
   computer's last action — is its own polite live region; a Retry button
   appears while `canRetry`), the finish overlay (between the games of a
   match: last result, score and "Next game" → `nextGame()`; at the end:
-  "Play again"; the board underneath goes `inert` and focus moves to the
-  result), and the collapsed
-  analysis line where the drawer `(planned)` will open. `/play/[gameId]`
-  carries a visually hidden `h1` naming the game.
+  "Play again", and "Review this game" → the review; the board underneath
+  goes `inert` and focus moves to the result), and the analysis drawer
+  below. `/play/[gameId]` carries a visually hidden `h1` naming the game.
+- **Analysis drawer** (`web/src/components/analysis`, spec §5.2): the
+  store's `analysis.forBot` (the computer's `choosePlay` output: its play
+  and every candidate) and `analysis.forHuman` (the `analyzePlay` grade of
+  the person's last play, computed inside `confirmPlay` before the
+  computer's reply, with the club parameters and the seed the bot's own
+  decisions use — `analysisSeedFor(record, turnIndex)`), plus
+  `analysisByTurn`, every grade of the game by turn index (the review adds
+  its own through `rememberAnalysis`). `analysis.visible` is the on/off
+  switch (on by default in bot games, persisted as `bg.analysis`);
+  expanded/collapsed is component state, collapsed on every table load.
+  Collapsed: one verdict strip; expanded: tabs Analysis (`CandidateList` —
+  rank, notation, ranking equity, Δ, `ProbBar` with six segments from
+  backgammons won to backgammons lost, sample `n=100 ±0.011` or `1-ply`;
+  the first rows the club search refines, "Show all" for the rest), Moves
+  (`MoveList` with `GradeBadge` pills) and Chat `(planned)`, disabled.
+  Under 900 px the open panel is a bottom sheet (transform only, Escape,
+  handle or scrim closes it); focus moves into the tabs on open and back to
+  the toggle on close; grades are announced in a polite live region; the
+  grade and probability colours are `--grade-*` / `--prob-*` tokens scoped
+  on `.analysis` (Editorial overrides them). Equities in the columns are
+  the search/ranking scale the grade uses; the bar and the sample describe
+  the rollout estimate, which is on a different scale.
+- **Review** (`web/src/components/review`, `web/src/app/review/[gameId]`):
+  `ReviewGame` loads the record (`game-source.ts`: a `local-<seed>` id from
+  `bg.games.<id>`, any other id from `GET /api/games/<id>`), creates the
+  review's own engine worker (a session singleton) and mounts
+  `ReviewPlayer`: `ReviewSummary` (result, per side errors / blunders /
+  equity lost, "n of n plays graded"), the transport (buttons, slider, ← →
+  Home End, the move list), the board `inert` at the position before the
+  stop with the played move's destinations highlighted, and the analysis
+  panel of the stop. Every play is graded with
+  `analyzePlay(board_before, player, dice, matchCtx, play, analysisSeedFor(record, i))`
+  — grades already in `store.analysisByTurn` are shown as they are, the rest
+  scheduled in the background (`model.ts`) and handed back to the store
+  while it still holds the same game, so the table's Moves tab shows them
+  too. Cube decisions are stops but not graded `(planned)`.
 - **Routes**: `/` landing (`#board-mount`, theme chooser, "Play the
   computer"), `/play/new` (`?seed=`, `?format=`, `?level=` preselect),
   `/play/local-<seed>?format=single|N&level=beginner|intermediate|club`
   (`N` = 1–25; see `web/src/app/play/game-options.ts`); any other game id
-  is a 404 until multiplayer. `/review/[gameId]` and `/api/games` are
-  `(planned)`.
-- **Storage**: `bg.theme` (theme id) and `bg.games.<id>` (the record, saved
-  after every accepted turn) in `localStorage`; opening an id with a stored
-  record resumes it (unfinished games continue, finished ones are shown
-  finished). Nothing is sent to the server yet.
+  is a 404 until multiplayer; `/review/[gameId]?level=` the review (see
+  **Review**). `POST /api/games` and `GET /api/games/[id]` — see
+  **Persistence** below.
+- **Storage**: `bg.theme` (theme id), `bg.analysis` (`1`/`0`, the analysis
+  drawer on or off), `bg.games.<id>` (the record, saved after every accepted
+  turn) and `bg.games.<id>.level` (the computer's level, written when the
+  game starts) in `localStorage`; opening an id with a stored record resumes
+  it at its stored level (unfinished games continue, finished ones are shown
+  finished; a record without a stored level takes the URL's and records it).
+  `bg.games.<id>.posted` remembers that the finished game was sent to the
+  server (`{"serverId": …}`) or that the server refused it (`{"rejected":
+  …}`), so a game is posted once — see Persistence.
+- **Persistence** (`web/src/server`, `web/src/app/api/games`,
+  `web/src/game/persist.ts`, `web/prisma`): when a bot game (or match) is
+  over, `PlayGame` posts `{ record, seats: { white: { kind: "guest", name },
+  black: { kind: "bot", level } } }` to `POST /api/games` (the person is
+  "Guest" for now; `level` is the stored `bg.games.<id>.level`, the level
+  the game was played at, never the URL's). The handler (`route.ts`)
+  rate-limits to 30 posts per minute per address (in-memory, keyed by the
+  last `X-Forwarded-For` entry — the one Caddy sets — normalised: IPv4 as
+  is, IPv6 by its /64 prefix, so one allocation is one budget; the table is
+  bounded at 10,000 keys, least recently hit evicted first), refuses bodies
+  over 2 MiB with `413` (a declared `Content-Length` over the cap before a
+  byte is read; otherwise the body is read in chunks and dropped the moment
+  the bytes received pass the cap — bytes, not characters — so nothing
+  larger is ever buffered), and calls `verifyAndStore` (`server/games.ts`):
+  the payload is shape-checked (`server/validate.ts`: seed, length, rules,
+  turns, guest name 1–40 characters, level, and exactly one guest and one
+  bot seat, either way round — two bots or two guests are `400`), replayed
+  with `bg-wasm` in Node (`engine/node.ts`), which rejects dice that do not
+  follow the seed and illegal plays; the game must be finished (a match
+  decided); the result is derived from the replayed state, never taken from
+  the client; then one nested Prisma `create` writes `Game`
+  (`format`/`matchLength` from the record's length, `botLevel` from the bot
+  seat, `seed`, `status: finished`, `result`, `moveLog` = the record) and
+  its two `GameSeat` rows (seat 0 = White, 1 = Black). What the replay does
+  not verify is the bot seat itself: the record shows which plays the
+  computer's side made, not that the engine's bot at the claimed level made
+  them, so browser-posted games are replay-verified but not bot-verified
+  (`botLevel` is the client's claim) — the spec already keeps bot games out
+  of ratings and the scoreboard, and any later consumer of `botLevel` +
+  `result` must keep that rule or add a provenance flag to the schema.
+  Answers: `201 { id }`, `400 { error }` (malformed, does not replay, not
+  finished — the error text says which), `413`, `429`, `500 { error: "the
+  game could not be saved" }` with the detail only in the server log. `GET
+  /api/games/<id>` returns exactly `{ record, result, seats }` (`result` =
+  `{ winner, kind, points, score }`) or `404 { error }`. There is no
+  server-side idempotency: the browser remembers what it posted under
+  `bg.games.<id>.posted` (a 400 is remembered too and not retried; a network
+  failure or 5xx is not remembered, so the game is posted again the next
+  time it is opened) and tells the person under the table when saving
+  failed — "This game could not be saved to the server: <reason>. It stays
+  on this device and will be sent again next time you open it." for a
+  failure (a 5xx reads `server error (HTTP 500)`, since its body is generic
+  by design), or "The server refused this game: <reason>. It stays on this
+  device." for a 400. The schema
+  (`web/prisma/schema.prisma`: `Game`, `GameSeat` per spec section 5.5,
+  `DATABASE_URL` read lazily so builds and tests need no database) and the
+  committed SQL migration (`web/prisma/migrations/20260914130432_init`) are
+  applied by the container entrypoint at every start (`prisma migrate
+  deploy`), so the image starts against an empty database. `DATABASE_URL`
+  is the only configuration (`postgresql://…`; composed on the host from
+  `POSTGRES_PASSWORD` in `deploy/docker-compose.prod.yml`).
 - **Tests**: `pnpm --filter web test` (engine client/worker protocol, store
   against `MockEngine` and against the real wasm via the Node loader, dice
   parity with the engine's seed-42 vector, record helpers, geometry, URL
   options, `PlayGame` (start once per id, bounded automatic retries, the
-  pause between the games of a match), and jsdom component tests for Board,
-  Table and Landing; the wasm
+  pause between the games of a match, one post per finished game and the
+  could-not-save note), the games service (Prisma mocked, real engine
+  replay of the fixture records), the two route handlers (service mocked),
+  the rate limiter, `persist.ts`, the PostgreSQL integration test when
+  `DATABASE_URL` is set, and jsdom component tests for Board, Table,
+  Landing, the analysis drawer and the review; the wasm
   suites skip when `engine/bg-wasm/pkg` is absent — `engine-parity` prints a
   banner and, like `engine-node`, fails under `CI`; the dice-parity and
   store-vs-wasm suites skip silently, so CI's `pkg` existence assertion is
@@ -614,10 +825,12 @@ jsdom for component tests, Playwright for e2e.
   clippy of `bg-wasm`, pinned installs of wasm-pack, wasm-bindgen-cli and
   wasm-opt, `wasm-pack build --mode no-install`, the `pkg` existence
   assertion, `pnpm install --frozen-lockfile`, `bg-node` build and parity
-  test) and job `web` (Rust toolchain + the same tools + `bg-wasm` build
-  first, then `pnpm install`, lint, typecheck, unit tests with coverage —
-  including the WASM parity test, which fails under `CI` when `pkg` is
-  missing — `next build`, Playwright e2e). The engine job's `cargo test`
+  test) and job `web` (a `postgres:16-alpine` service container with
+  `DATABASE_URL` set for the job; Rust toolchain + the same tools +
+  `bg-wasm` build first, then `pnpm install`, `prisma migrate deploy`, lint,
+  typecheck, unit tests with coverage — including the WASM parity test and
+  the PostgreSQL integration test, both of which fail under `CI` when they
+  cannot run — `next build`, Playwright e2e). The engine job's `cargo test`
   includes the vector drift checks (`bg-core/tests/vectors.rs`,
   `bg-bot/tests/vectors.rs`, and the debug subset of
   `bg-wasm/tests/vectors.rs`). The Playwright run includes the screenshot
@@ -625,7 +838,9 @@ jsdom for component tests, Playwright for e2e.
   `web/test-results/screens/` as the `screens` artifact on every run and the
   Playwright HTML report as `playwright-report` when the e2e step fails.
   The e2e suite also plays a whole seeded beginner game (`bot-game.spec.ts`)
-  and the first game of a match to 3 through "Next game" (`match.spec.ts`).
+  and the first game of a match to 3 through "Next game" (`match.spec.ts`),
+  reviews a finished game (`review.spec.ts`) and exercises the games API
+  against the service database (`api-games.spec.ts`).
 - `deploy.yml` runs when CI succeeds for a `push` to `master` of this
   repository (a fork's pull-request CI run also reports `head_branch ==
   master`, so the event type and head repository are checked as well), in the
@@ -671,7 +886,10 @@ host deploy.
   realtime `/ws*` route from the spec is `(planned)`.
 - `/opt/backgammon` holds `docker-compose.yml` (extracted from the image on
   every deploy) and `.env`. Containers: `backgammon-app` (port 3000, networks
-  `edge` + `internal`) and `backgammon-postgres` (PostgreSQL 16, network
+  `edge` + `internal`; `DATABASE_URL` is composed in the compose file from
+  `POSTGRES_PASSWORD`; the entrypoint applies the Prisma migrations before the
+  server starts, and `depends_on: condition: service_healthy` waits for
+  Postgres) and `backgammon-postgres` (PostgreSQL 16, network
   `internal`, volume `postgres-data`). Image tag on the host: `backgammon:current`.
 - The forced command lives at `/usr/local/bin/backgammon-deploy` (source:
   `deploy/backgammon-deploy.sh`). Its allowlists (services, images, volumes,

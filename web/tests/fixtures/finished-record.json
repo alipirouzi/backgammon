@@ -1,0 +1,1065 @@
+{
+  "seed": 42,
+  "length": 0,
+  "rules": {
+    "jacoby": true,
+    "beavers": false,
+    "autoDoubles": false
+  },
+  "turns": [
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "24/23 23/18",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": null,
+      "action": "double",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": null,
+      "action": "take",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 3,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 3,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "13/10(2) 10/7* 10/7",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "move",
+      "play": "bar/21 21/16",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 3,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 3,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "13/10 10/9*",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "bar/22 24/20",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "9/5* 8/5",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "move",
+      "play": "",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "13/8 8/7",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "move",
+      "play": "bar/21 21/16",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "13/9* 9/6",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "bar/23 13/9",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "24/22 22/16*",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "bar/22 13/9*",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 3,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 3,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "bar/22 7/4(3)",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "22/18 18/15",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "move",
+      "play": "24/20 6/1",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "23/22 22/18",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "move",
+      "play": "20/16* 6/1",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "bar/23 23/18",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "22/18 16/15",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "22/18 15/14",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "18/15 15/11*",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "bar/22 22/16",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "15/10 11/8",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "18/14 16/15*",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "bar/24 8/2",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "18/12 15/14",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "24/20 4/2",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 2,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 2,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "18/16 16/14 14/12(2)",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "20/14 14/11*",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 3,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 3,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "bar/22 13/11",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "8/3* 3/1",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "8/6 6/1",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "6/3 6/1",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 6,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "move",
+      "play": "11/6 6/off",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 5
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 5
+      },
+      "action": "move",
+      "play": "6/1(2) 5/off(2)",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "move",
+      "play": "bar/20 20/16",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "4/off 3/2",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 4,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "16/14 14/10",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "move",
+      "play": "4/off 2/off",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 4
+      },
+      "action": "move",
+      "play": "13/9 13/8",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 4,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "2/off 1/off",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 3,
+        "lo": 2
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 3,
+        "lo": 2
+      },
+      "action": "move",
+      "play": "12/10 12/9",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "2/off 1/off",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 3
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 3
+      },
+      "action": "move",
+      "play": "12/9 11/6",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 5
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 5,
+        "lo": 5
+      },
+      "action": "move",
+      "play": "1/off(4)",
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "white",
+      "dice": {
+        "hi": 5,
+        "lo": 1
+      },
+      "action": "move",
+      "play": "10/9 10/5",
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "roll",
+      "play": null,
+      "resignPoints": null
+    },
+    {
+      "player": "black",
+      "dice": {
+        "hi": 6,
+        "lo": 5
+      },
+      "action": "move",
+      "play": "1/off",
+      "resignPoints": null
+    }
+  ]
+}

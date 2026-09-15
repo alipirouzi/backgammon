@@ -49,7 +49,10 @@ COPY engine engine
 # --mode no-install: use the verified wasm-bindgen and wasm-opt on PATH; never download.
 RUN wasm-pack build engine/bg-wasm --target bundler --release --out-dir pkg --out-name bg_wasm --mode no-install
 
-FROM node:22-alpine AS base
+# All Node stages share one Debian base: Prisma's query engine is generated for
+# the build stage's platform ("native" plus the explicit debian-openssl-3.0.x
+# target in web/prisma/schema.prisma) and must match the runtime stage.
+FROM node:22-bookworm-slim AS base
 RUN corepack enable
 WORKDIR /repo
 
@@ -68,19 +71,56 @@ COPY web web
 ENV NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=2048
 RUN pnpm --filter web build
 
-FROM node:22-alpine AS runtime
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+# --- prisma-cli: the CLI that runs `prisma migrate deploy` at container start --
+# Installed flat with npm into its own directory: in the pnpm workspace the CLI
+# and its dependency tree live as symlinks in the virtual store, which does not
+# copy cleanly into the runtime image. Version pinned to web/package.json's.
+FROM node:22-bookworm-slim AS prisma-cli
+ARG PRISMA_VERSION=6.19.3
+WORKDIR /opt/prisma-cli
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates openssl \
+ && rm -rf /var/lib/apt/lists/*
+# The install also downloads the schema engine for this platform (used by
+# migrate deploy); `--version` proves it is present before the image is built.
+RUN npm install --no-audit --no-fund --omit=dev "prisma@${PRISMA_VERSION}" \
+ && node node_modules/prisma/build/index.js --version
+
+FROM node:22-bookworm-slim AS runtime
+# CHECKPOINT_DISABLE / PRISMA_HIDE_UPDATE_MESSAGE: the Prisma CLI must not phone
+# home or look for updates when the entrypoint runs the migrations.
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0 \
+    CHECKPOINT_DISABLE=1 PRISMA_HIDE_UPDATE_MESSAGE=1 HOME=/home/app
+# openssl: Prisma's engines link against libssl3, which the slim image lacks.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates openssl \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd --system app \
+ && useradd --system --gid app --home-dir /home/app --create-home --shell /usr/sbin/nologin app
 WORKDIR /app
-RUN addgroup -S app && adduser -S -G app app
 COPY --from=build --chown=app:app /repo/web/.next/standalone ./
 COPY --from=build --chown=app:app /repo/web/.next/static ./web/.next/static
 COPY --from=build --chown=app:app /repo/web/public ./web/public
+# The engine for the server side (src/engine/node.ts, used by /api/games to
+# replay posted records) is imported by file URL at runtime, which Next's
+# output tracing cannot follow, so the built package is copied where node.ts
+# looks for it: node_modules/bg-wasm above the server's working directory.
+COPY --from=wasm --chown=app:app /repo/engine/bg-wasm/pkg ./web/node_modules/bg-wasm
+# Schema + migrations for `prisma migrate deploy`, and the CLI that runs it.
+COPY --from=build --chown=app:app /repo/web/prisma ./web/prisma
+COPY --from=prisma-cli --chown=app:app /opt/prisma-cli/node_modules ./prisma-cli/node_modules
+COPY --chown=app:app --chmod=755 web/scripts/docker-entrypoint.sh ./docker-entrypoint.sh
 # Deploy descriptors travel inside the image; the host-side forced command
 # extracts them, so the repo owns compose and Caddy config without needing scp.
 COPY deploy/docker-compose.prod.yml /deploy/docker-compose.yml
 COPY deploy/backgammon.caddy /deploy/backgammon.caddy
 USER app
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1:3000/health || exit 1
-# In a pnpm workspace Next standalone nests the app under web/, so server.js is at web/server.js.
+# No wget/curl in the slim image; node's fetch does the probe.
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+# The entrypoint applies the migrations (DATABASE_URL required), then execs the
+# CMD. In a pnpm workspace Next standalone nests the app under web/, so
+# server.js is at web/server.js.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "web/server.js"]

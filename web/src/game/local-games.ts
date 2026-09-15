@@ -1,13 +1,16 @@
 /**
  * `localStorage` persistence for guest play: the board theme under
- * `bg.theme` and each local bot game's record under `bg.games.<id>` (kept
- * until piece E posts it to the server). Every access is guarded — storage
- * may be absent (server rendering, tests), disabled or full — and a failure
- * degrades to "nothing stored", never to an exception in the UI.
+ * `bg.theme`, each local bot game's record under `bg.games.<id>` (kept
+ * until piece E posts it to the server) and the level that game was started
+ * at under `bg.games.<id>.level` — the record itself carries no level, and a
+ * game must be resumed and posted at the level it was played at, not at
+ * whatever the URL says when it is reopened. Every access is guarded —
+ * storage may be absent (server rendering, tests), disabled or full — and a
+ * failure degrades to "nothing stored", never to an exception in the UI.
  */
 
 import { THEME_IDS, type ThemeId } from "@/components/board/types";
-import type { Record as GameRecord } from "@/engine/types";
+import type { Level, Record as GameRecord } from "@/engine/types";
 
 /** The subset of the DOM `Storage` interface this module relies on. */
 export interface StorageLike {
@@ -111,11 +114,42 @@ export function loadLocalGame(id: string, storage: StorageLike | null = defaultS
   }
 }
 
+/** Removes the record under `bg.games.<id>` and its level; the posted marker (`persist.ts`) is not touched. */
 export function removeLocalGame(id: string, storage: StorageLike | null = defaultStorage()): void {
   try {
     storage?.removeItem(gameKey(id));
+    storage?.removeItem(levelKey(id));
   } catch {
     // Nothing to remove, or storage unavailable.
+  }
+}
+
+export const LEVEL_SUFFIX = ".level";
+
+/** `bg.games.<id>.level` */
+export const levelKey = (id: string): string => `${gameKey(id)}${LEVEL_SUFFIX}`;
+
+const LEVELS: readonly Level[] = ["beginner", "intermediate", "club"];
+
+const isLevel = (value: unknown): value is Level => typeof value === "string" && (LEVELS as readonly string[]).includes(value);
+
+/** Remembers the level game `id` is played at; returns `false` when storage is unavailable. */
+export function saveLocalGameLevel(id: string, level: Level, storage: StorageLike | null = defaultStorage()): boolean {
+  try {
+    storage?.setItem(levelKey(id), level);
+    return storage !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** The level stored for game `id`, or `null` when none (or not a level) is stored. */
+export function loadLocalGameLevel(id: string, storage: StorageLike | null = defaultStorage()): Level | null {
+  try {
+    const value = storage?.getItem(levelKey(id)) ?? null;
+    return isLevel(value) ? value : null;
+  } catch {
+    return null;
   }
 }
 

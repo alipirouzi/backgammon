@@ -125,6 +125,28 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    # PostgreSQL 16 (the production image) as a service container:
+    # web/tests/server-games.integration.test.ts runs against it (the file is
+    # skipped without DATABASE_URL and fails under CI when it cannot run), and
+    # the Playwright run's `next start` inherits DATABASE_URL, so
+    # web/e2e/api-games.spec.ts posts and reads games through the real API.
+    # The password is a throwaway for the job's lifetime.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: backgammon
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: backgammon
+        ports:
+          - 5439:5432
+        options: >-
+          --health-cmd "pg_isready -U backgammon -d backgammon"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://backgammon:ci@127.0.0.1:5439/backgammon
     defaults:
       run:
         working-directory: web
@@ -183,6 +205,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         working-directory: .
+      - name: Apply the Prisma migrations (web/prisma/migrations) to the service database
+        # `prisma migrate deploy`: the same command the container entrypoint runs at
+        # start; the integration test and the API e2e need the tables to exist.
+        run: pnpm prisma:migrate:deploy
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test -- --coverage

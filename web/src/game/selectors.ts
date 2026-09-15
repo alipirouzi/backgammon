@@ -5,7 +5,7 @@
  * the engine returned and the legal plays it listed.
  */
 
-import type { Board, Move, Phase, Player, ResultKind } from "@/engine/types";
+import type { Board, Move, MoveAnalysis, Phase, Player, ResultKind } from "@/engine/types";
 
 import { concededPoints, movesMatchPlay, opponent, remainingMoves, resignPoints } from "./record";
 import type { GameStoreState } from "./store";
@@ -273,4 +273,31 @@ export function legalTargetsFrom(s: GameStoreState, from: number): number[] {
 export function moveOnBoard(board: Board, player: Player, from: number, to: number): Move {
   const hit = to !== 0 && board[opponent(player)][toAbsolute(player, to)] === 1;
   return { from, to, hit };
+}
+
+// ---------------------------------------------------------------------------
+// Analysis drawer
+
+export function isAnalysisVisible(s: GameStoreState): boolean {
+  return s.analysis.visible;
+}
+
+/**
+ * Whose decision was analysed last — the person's graded play or the bot's
+ * choice — by turn index, so the drawer can lead with the latest one.
+ */
+export function latestAnalysedSide(s: GameStoreState): "human" | "bot" | null {
+  const { forBot, forHuman } = s.analysis;
+  if (forBot === null && forHuman === null) {
+    return null;
+  }
+  if (forBot === null || (forHuman !== null && forHuman.turnIndex > forBot.turnIndex)) {
+    return "human";
+  }
+  return "bot";
+}
+
+/** The club-strength analysis cached for the move turn at `turnIndex`, if any. */
+export function analysisForTurn(s: GameStoreState, turnIndex: number): MoveAnalysis | null {
+  return s.analysisByTurn[turnIndex] ?? null;
 }
