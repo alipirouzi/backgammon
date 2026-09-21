@@ -27,7 +27,7 @@ SITE=backgammon.automated.ink
 CADDY_CONTAINER=caddy
 CADDY_SITES_MOUNT=/etc/caddy/sites # $SITES_DIR as seen inside the Caddy container
 
-ALLOWED_SERVICES=$'app\npostgres'
+ALLOWED_SERVICES=$'app\npostgres\nrealtime'
 ALLOWED_IMAGES='^(backgammon:current|postgres:[0-9]+(\.[0-9]+)?-alpine)$'
 ALLOWED_VOLUMES='^postgres-data$'
 ALLOWED_NETWORKS='^(edge|internal)$'

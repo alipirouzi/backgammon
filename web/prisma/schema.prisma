@@ -1,6 +1,6 @@
-// Persistence for the web app (spec §5.5) — only `Game` and `GameSeat` for
-// now; `User`, Auth.js tables, chat, leagues and ratings arrive with later
-// pieces. Finished games are immutable: a bot-game record posted from the
+// Persistence for the web app (spec §5.5) — `Game`, `GameSeat` and
+// `ChatMessage` for now; `User`, Auth.js tables, leagues and ratings arrive
+// with later pieces. Finished games are immutable: a bot-game record posted from the
 // browser is re-verified by replaying it through the engine
 // (web/src/server/games.ts) before it is stored as `finished`.
 //
@@ -27,6 +27,9 @@ enum GameFormat {
 }
 
 /// Lifecycle of a game; bot games arrive from the browser already `finished`.
+/// Remote games (piece 4): `created` while the invite waits for its second
+/// seat, `active` once both seats are claimed, `finished` with a `result`,
+/// `abandoned` after 24 h without an action or an explicit leave.
 enum GameStatus {
   created
   active
@@ -60,10 +63,15 @@ model Game {
   /// The full `Record` (seed, length, rules, turns) exactly as the engine replays it.
   moveLog     Json
   createdAt   DateTime   @default(now())
+  /// Last write to the row — for remote games, the last accepted action; the
+  /// abandonment sweep (realtime process) reads `status` + `updatedAt`.
+  updatedAt   DateTime   @default(now()) @updatedAt
   finishedAt  DateTime?
   seats       GameSeat[]
+  chat        ChatMessage[]
 
   @@index([status, createdAt])
+  @@index([status, updatedAt])
 }
 
 /// Who sat where: `seat` 0 is White, 1 is Black.
@@ -82,4 +90,18 @@ model GameSeat {
 
   @@unique([gameId, seat])
   @@index([userId])
+}
+
+/// One line of in-game chat (piece 4); `seat` says who wrote it.
+model ChatMessage {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  /// 0 = White, 1 = Black.
+  seat      Int
+  /// 1–500 characters, validated by the realtime server before it is stored.
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([gameId, createdAt])
 }

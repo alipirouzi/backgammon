@@ -30,30 +30,39 @@
 
 **Game rules for remote games.** `Rules` as for bot games (money: Jacoby on; match: off), format chosen by the creator (single or match to 1–25), cube allowed per engine rules, no beavers, no automatic doubles. Dice come from the record seed via replay, exactly as bot games: the server appends the roll turn with the dice it derived (using `web/src/game/dice.ts`'s `DiceRng` port) and re-verifies with `replay`.
 
-**Protocol** (JSON text frames; every client→server message has a client-generated `id` for acknowledgement):
+**Protocol** (JSON text frames; every client→server message has a client-generated `id` for acknowledgement). *Revised 2026-09-21 after the PR F review — this block supersedes the earlier wording; `web/src/realtime/protocol.ts` is the executable form:*
 
 ```ts
-// client → server
+// client → server. `id` doubles as an idempotency key: the server remembers a seat's last 50 ids with their
+// answers and repeats the stored ack/rejected for a resend without acting again — so ids must be unique per
+// seat across reconnects AND page reloads (crypto.randomUUID(), never a counter that restarts at 1).
 type ClientMsg =
- | { id: string; type: 'join' }                                 // after upgrade; server answers snapshot
+ | { id: string; type: 'join' }                                 // after upgrade; server answers snapshot then ack (never replayed from memory)
  | { id: string; type: 'roll' } | { id: string; type: 'double' } | { id: string; type: 'take' } | { id: string; type: 'drop' }
  | { id: string; type: 'move'; play: string }                   // notation relative to the mover
- | { id: string; type: 'resign'; kind: 'single'|'gammon'|'backgammon' }
+ | { id: string; type: 'resign'; kind: 'single'|'gammon'|'backgammon' }   // an OFFER from the player on roll: nothing is conceded yet
+ | { id: string; type: 'acceptResign' } | { id: string; type: 'declineResign' }   // the opponent's answer to the offer
  | { id: string; type: 'nextGame' }                             // between games of a match; either seat may send; the game starts when both have sent or after 30 s
  | { id: string; type: 'chat'; text: string }                   // 1–500 chars
- | { id: string; type: 'ping' }
+ | { id: string; type: 'ping' }                                 // answered with pong, no ack
 // server → client
+type WireRecord = Omit<Record, 'seed'> & { seed?: number }      // the seed is ABSENT while status is created/active (the dice stream follows from it) and present once finished/abandoned
+type ResignOffer = { seat: 0|1; kind: 'single'|'gammon'|'backgammon'; points: number }   // points priced by the server's rules (cube, Jacoby), never by the client
 type ServerMsg =
- | { type: 'snapshot'; game: { id; seat: 0|1; record: Record; match: MatchState; seats: SeatInfo[]; awaitingNextGame: boolean; presence: [boolean, boolean]; chat: ChatLine[] } }
- | { type: 'state'; record: Record; match: MatchState; awaitingNextGame: boolean; lastTurnIndex: number }   // after every accepted action, to both seats
+ | { type: 'snapshot'; game: { id; seat: 0|1; status: 'created'|'active'|'finished'|'abandoned'; record: WireRecord; match: MatchState; seats: SeatInfo[];
+                              awaitingNextGame: boolean; nextGame: { votes: [boolean, boolean]; startsAt: number | null }; resignOffer: ResignOffer | null;
+                              presence: [boolean, boolean]; chat: ChatLine[] } }   // finished/abandoned sessions are read-only (chat still works); votes, deadline and offer live in server memory only
+ | { type: 'state'; record: WireRecord; match: MatchState; awaitingNextGame: boolean; lastTurnIndex: number }   // after every accepted action, to both seats
  | { type: 'ack'; id: string }
  | { type: 'rejected'; id: string; code: 'notYourTurn'|'illegal'|'wrongPhase'|'invalid'|'rateLimited'|'gameOver'; message: string }
  | { type: 'chat'; line: ChatLine }                             // ChatLine = { seat, name, text, at }
  | { type: 'presence'; presence: [boolean, boolean] }
  | { type: 'gameOver'; result: GameResult; matchOver: boolean }
+ | { type: 'resignOffered'; offer: ResignOffer }                // broadcast after `resign` is acked
+ | { type: 'resignCleared'; offer: ResignOffer; reason: 'declined' | 'withdrawn' }   // `declined` on declineResign; `withdrawn` precedes the state of any accepted game action by the offerer
  | { type: 'pong' }
 ```
-Validation: zod schemas for every message; unknown types → `rejected invalid`; more than 20 messages per 10 s per socket → `rateLimited`; frames over 8 KiB closed with code 1009.
+Resignation flow: `resign { kind }` → ack to the offerer + `resignOffered` to both; `acceptResign` → ack, `state`, `gameOver` (the resign turn is appended with the offered points); `declineResign` → ack + `resignCleared declined`; a repeated `resign` replaces the offer. Validation: zod schemas for every message; unknown types → `rejected invalid`; more than 20 messages per 10 s **per seat** (all its sockets together) → `rateLimited`; at most 4 open sockets per seat — a fifth closes the oldest with code 4001 "too many connections"; frames over 8 KiB closed with code 1009. Upgrade: 403 when the `Origin` header is not on `ALLOWED_ORIGINS` (a handshake without `Origin` is accepted outside `NODE_ENV=production` only), then 401 without a valid seat cookie. Between the games of a match the next game starts when both have voted or 30 s after the first vote; should the store refuse that opening roll the server retries after 5 s, 10 s and 20 s and, those spent, again on the next frame from either seat (snapshot `nextGame.startsAt` says when).
 
 **Authority.** The server never trusts client positions. `move` is checked with `legal_plays` for the current dice; cube actions with `can_double` semantics from the engine's `MatchState` phase; every accepted action is appended to the record, re-verified by `replay`, persisted (`Game.moveLog`, `status`), and broadcast as `state`. On finish the server writes `result`, `finishedAt`, `status finished` (the same row shape the review page reads).
 
@@ -124,7 +133,7 @@ Files: `TableLayout.tsx` (remote: names from seats, presence, "Leave game", invi
 Files: `web/e2e/multiplayer.spec.ts`: context A creates an invite (seeded via a test-only header `X-Test-Seed` accepted only when `NODE_ENV !== 'production'`), context B claims, both play a single game to completion using the shared move helper, chat both ways, a third context gets "already in progress", reload of B resumes with the cookie; review page opens for the finished game. Playwright `webServer` starts both `next start` and the realtime process (array form). CI: the web job runs the realtime process against the service DB. Gate + Docker compose smoke with two ws clients + README.
 
 ### Task 10: Deploy (orchestrator)
-Host: allowlist edit, `SEAT_SECRET` in `.env`, verify snippet passes `check_caddy_snippet` locally by sourcing the script. Merge → deploy → verify: `wss://backgammon.automated.ink/ws` upgrade returns 401 without a cookie; a real two-browser game on the live site.
+Host: allowlist edit, `SEAT_SECRET` in `.env`, verify snippet passes `check_caddy_snippet` locally by sourcing the script. Merge → deploy → verify: `wss://backgammon.automated.ink/ws` upgrade returns 403 without an `Origin` header and 401 with `Origin: https://backgammon.automated.ink` but no cookie; a real two-browser game on the live site.
 
 # PR H — optional clocks (Task 11)
 Bronstein clock per game: reserve minutes + per-move seconds chosen at creation; server-side timing with `Date` only in the realtime process; `state` carries `clock: { remainingMs: [a, b], turnStartedAt }`; expiry forfeits the game (single) or the match per spec §5.4; player cards show the clock; e2e with a 5-second reserve.

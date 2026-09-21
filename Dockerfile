@@ -70,6 +70,26 @@ FROM deps AS build
 COPY web web
 ENV NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=2048
 RUN pnpm --filter web build
+# The realtime process (web/src/realtime, served by the same image under a
+# different command): one esbuild bundle in web/dist (web/scripts/build-
+# realtime.mjs) that leaves @prisma/client, the generated client (.prisma/
+# client, engine binary included), ws and bg-wasm external. Next's standalone
+# output carries only the files its own server chunks trace, inside
+# node_modules/.pnpm, with no resolvable web/node_modules/@prisma/client or
+# ws for a second entry point, so the three packages are dereferenced out
+# of pnpm's symlinked store here (`cp -L`) into a flat directory the runtime
+# stage copies next to bg-wasm. None of them has further runtime
+# dependencies (@prisma/client's runtime is self-contained and requires
+# `.prisma/client` by walking up from its own directory).
+RUN pnpm --filter web realtime:build \
+ && mkdir -p /repo/realtime-deps/@prisma \
+ && cp -RL web/node_modules/ws /repo/realtime-deps/ws \
+ && cp -RL web/node_modules/@prisma/client /repo/realtime-deps/@prisma/client \
+ && cp -RL "$(dirname "$(readlink -f web/node_modules/@prisma/client)")/../.prisma" /repo/realtime-deps/.prisma \
+ && test -f /repo/realtime-deps/ws/package.json \
+ && test -f /repo/realtime-deps/@prisma/client/package.json \
+ && test -f /repo/realtime-deps/.prisma/client/index.js \
+ && ls /repo/realtime-deps/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 
 # --- prisma-cli: the CLI that runs `prisma migrate deploy` at container start --
 # Installed flat with npm into its own directory: in the pnpm workspace the CLI
@@ -106,6 +126,19 @@ COPY --from=build --chown=app:app /repo/web/public ./web/public
 # output tracing cannot follow, so the built package is copied where node.ts
 # looks for it: node_modules/bg-wasm above the server's working directory.
 COPY --from=wasm --chown=app:app /repo/engine/bg-wasm/pkg ./web/node_modules/bg-wasm
+# The realtime process: `node web/dist/realtime.js` (deploy/docker-compose.prod.yml
+# service `realtime`; the entrypoint runs the migrations first for it too).
+# dist/ holds the bundle, its source map and a package.json declaring ESM;
+# its external packages (ws, @prisma/client, .prisma/client) go beside
+# bg-wasm, where the bundle's bare imports resolve them.
+# BG_WASM_DIR: src/engine/node.ts otherwise looks for node_modules/bg-wasm
+# above the working directory, which is /app here (the Next server chdirs
+# to web/ itself; for it the variable names the same directory).
+COPY --from=build --chown=app:app /repo/web/dist ./web/dist
+COPY --from=build --chown=app:app /repo/realtime-deps/ws ./web/node_modules/ws
+COPY --from=build --chown=app:app /repo/realtime-deps/@prisma ./web/node_modules/@prisma
+COPY --from=build --chown=app:app /repo/realtime-deps/.prisma ./web/node_modules/.prisma
+ENV BG_WASM_DIR=/app/web/node_modules/bg-wasm
 # Schema + migrations for `prisma migrate deploy`, and the CLI that runs it.
 COPY --from=build --chown=app:app /repo/web/prisma ./web/prisma
 COPY --from=prisma-cli --chown=app:app /opt/prisma-cli/node_modules ./prisma-cli/node_modules

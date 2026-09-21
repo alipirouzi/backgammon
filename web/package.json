@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "prisma:generate": "prisma generate",
-    "prisma:migrate:deploy": "prisma migrate deploy"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "realtime:build": "node scripts/build-realtime.mjs",
+    "realtime:start": "node dist/realtime.js"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
@@ -19,6 +21,8 @@
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "ws": "^8.21.3",
+    "zod": "^4.6.5",
     "zustand": "^5"
   },
   "devDependencies": {
@@ -31,7 +35,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "jsdom": "30.0.1",
