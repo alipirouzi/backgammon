@@ -28,14 +28,22 @@ computer's candidates; a finished game opens in the **post-game review**, turn
 by turn with grades; and a finished bot game is posted to the server,
 re-verified by replaying its record through the engine in Node, and stored in
 PostgreSQL (see **Analysis drawer**, **Review** and **Persistence** under
-[Web app](#web-app)). Multiplayer, members and languages follow.
+[Web app](#web-app)). The **multiplayer server side** exists (PR F): the
+schema for invites and chat, the invite and seat-claim services, the seat
+cookie, and the **realtime process** — a second Node process from the same
+image that serves WebSockets at `/ws`, owns every remote game (dice from
+the stored seed, every action validated by the engine, every turn persisted,
+restart-safe), and is wired into the image, the production compose file and
+the Caddy snippet (see **Multiplayer** under [Web app](#web-app)). The
+browser side — invite pages, the remote transport, chat, the two-browser
+e2e — is `(planned)` (PR G); members and languages follow.
 
 Delivery order (spec section 9); each piece gets its own spec, plan, and PRs:
 
 1. Foundation — done
 2. Engine — this repository state: `bg-core` (rules, plays, notation, game and match state, records, test vectors), `bg-bot` (evaluator, match equity table, club bot with three levels, rollouts, cube decisions, analysis output, decision vectors), `bg-wasm` and `bg-node` (JSON bindings with parity tests, wired into CI and the image build)
 3. Play — board, three themes, bot games (PR D); analysis drawer, post-game review, persistence of finished games (`POST /api/games`, Prisma + PostgreSQL, migrations at container start) (PR E): this repository state
-4. Multiplayer `(planned)` — invite links, seat claiming, realtime process, chat, optional clocks
+4. Multiplayer — server side (PR F: schema, invite and seat-claim services, seat cookies, protocol, `GameSession`, sessions registry, WebSocket server, realtime bundle, image, compose, Caddy): this repository state; browser side (invite pages and API routes, remote transport, chat, two-browser e2e) `(planned)` (PR G); optional clocks `(planned)` (PR H)
 5. Members `(planned)` — magic-link login, profiles, leagues, Glicko-2, scoreboard
 6. Languages `(planned)` — fa/tr/de/fr translations, RTL, rules guide
 
@@ -46,7 +54,14 @@ new-game form; `GET /play/local-<seed>` a bot game; `GET
 `local-<seed>` id from this browser's storage, a server id through the API);
 `POST /api/games` stores a finished bot game and `GET /api/games/<id>` reads
 it back (see **Persistence** under [Web app](#web-app)); `GET /health`
-returns `200 {"status":"ok"}`. Security headers are set in `web/next.config.ts`;
+returns `200 {"status":"ok"}`. The realtime process (its own container,
+`backgammon-realtime`, reached through Caddy) serves `GET /ws?game=<gameId>`
+(the WebSocket upgrade; a valid seat cookie for that game is required, 401
+otherwise) and `GET /healthz` (`200 {"status":"ok"}` when the database
+answers). The pages and API routes that create invites and claim seats
+(`/play/new` "Invite a friend", `/g/<token>`, `POST /api/games/invite`,
+`POST /api/games/<id>/claim`) are `(planned)` (PR G); the services behind
+them exist (`web/src/server/invites.ts`). Security headers are set in `web/next.config.ts`;
 `X-Powered-By` is disabled. The Content-Security-Policy is sent as
 `Content-Security-Policy-Report-Only`: enforcing it needs per-request nonces
 for Next's inline hydration scripts and for the root layout's inline theme
@@ -96,20 +111,30 @@ backgammon/
 │   ├── src/components/              board/ (geometry, Board + parts, board.css), table/ (TableLayout, PlayerCard, ActionBar,
 │   │                                StatusLine), analysis/ (AnalysisDrawer, CandidateList, ProbBar, GradeBadge, MoveList, format),
 │   │                                review/ (ReviewPlayer, ReviewSummary, game-source, model), theme/ (SiteHeader, ThemeSwitch, useTheme), landing/
-│   ├── src/server/                  db.ts (Prisma client), games.ts (verify + store), validate.ts, rate-limit.ts — server-only
+│   ├── src/server/                  db.ts (Prisma client), games.ts (verify + store), invites.ts (createInvite, claimSeat, getInvite),
+│   │                                validate.ts, rate-limit.ts — server-only
+│   ├── src/realtime/                the realtime process: main.ts (entry), env.ts, server.ts + server-io.ts (http + ws, upgrade auth,
+│   │                                /healthz), session.ts + session-rules.ts + session-types.ts (GameSession), sessions.ts +
+│   │                                session-store.ts (registry, Prisma persistence, sweep), protocol.ts + protocol-engine.ts (zod
+│   │                                schemas), auth.ts (seat cookies; also used by the API routes), limits.ts, log.ts (JSON lines)
 │   ├── src/styles/                  tokens.css, themes.css (the three [data-theme] palettes)
-│   ├── prisma/                      schema.prisma (Game, GameSeat), migrations/ (applied by the container entrypoint)
+│   ├── prisma/                      schema.prisma (Game, GameSeat, ChatMessage), migrations/ (applied by the container entrypoint)
+│   ├── scripts/                     docker-entrypoint.sh (migrations, then the CMD), build-realtime.mjs (esbuild bundle -> dist/)
+│   ├── dist/                        realtime.js + .map + package.json + realtime.meta.json, generated by `pnpm realtime:build` (gitignored)
 │   ├── tests/                       Vitest: engine-parity, engine-client, engine-node, store, store-engine, record, dice, geometry,
 │   │                                game-options, landing-theme, health, play-game, play-game-persist, persist, api-games, api-routes,
-│   │                                rate-limit, server-games.integration (needs DATABASE_URL), fixtures/, components/*.test.tsx (jsdom)
+│   │                                rate-limit, server-invites, server-games.integration + server-invites.integration (need DATABASE_URL),
+│   │                                realtime/ (auth, protocol, session, session-match, sessions, sessions.integration (needs DATABASE_URL),
+│   │                                server (also covers limits.ts), env, log, build; helpers harness, drive, pick, ws-client),
+│   │                                fixtures/, components/*.test.tsx (jsdom)
 │   ├── e2e/                         Playwright: landing, bot-game, match, themes (screenshot matrix), review, api-games (needs DATABASE_URL)
 │   ├── docker-compose.dev.yml       PostgreSQL 16 for local development and tests (127.0.0.1:5439); never deployed
 │   └── .env.example                 DATABASE_URL for that database (copy to web/.env, gitignored)
 ├── deploy/
-│   ├── docker-compose.prod.yml      app + postgres on the host
-│   ├── backgammon.caddy             per-site Caddy snippet
+│   ├── docker-compose.prod.yml      app + realtime + postgres on the host
+│   ├── backgammon.caddy             per-site Caddy snippet (/ws* -> realtime, the rest -> app)
 │   └── backgammon-deploy.sh         host forced command (/usr/local/bin/backgammon-deploy)
-├── Dockerfile                       multi-stage: Rust stage builds bg-wasm, then Next standalone output
+├── Dockerfile                       multi-stage: Rust stage builds bg-wasm, then Next standalone output + the realtime bundle
 ├── .dockerignore                    keeps engine/ in the context, drops target/, pkg/ and bg-node artefacts
 ├── package.json  pnpm-workspace.yaml  .nvmrc  .editorconfig  .gitignore  LICENSE
 └── docs/superpowers/{specs,plans}/
@@ -155,6 +180,38 @@ prisma:generate` regenerates the client after a schema change (`build` and
 500, and the browser reports "could not be saved" under the table and tries
 again the next time the game is opened. `docker compose -f
 web/docker-compose.dev.yml down -v` removes the database again, data included.
+
+**Realtime process** (multiplayer server side; see **Multiplayer** under
+[Web app](#web-app)). It is a separate Node process built by esbuild from
+`web/src/realtime/main.ts` into `web/dist/realtime.js` (one ESM file; `ws`,
+`@prisma/client`, the generated client and `bg-wasm` stay external and are
+resolved from `web/node_modules`; `web/dist/package.json` declares `type:
+module`; `web/scripts/build-realtime.mjs` holds the configuration). It needs
+`DATABASE_URL` and `SEAT_SECRET` (required at start; a misconfigured process
+exits with one JSON error line naming what is missing — `SEAT_SECRET` is
+only checked for presence today, seat cookies are verified against per-seat
+hashes), `ALLOWED_ORIGINS` (comma-separated browser origins,
+`scheme://host[:port]`, allowed to open a socket; required under
+`NODE_ENV=production`, `http://localhost:3000` by default elsewhere; a
+handshake with no `Origin` at all, i.e. not a browser's, is let through on
+the strength of the seat cookie outside production only), optional `PORT`
+(default 4000), `HOST` (default 0.0.0.0) and `LOG_LEVEL`
+(`debug|info|warn|error`, default `info`):
+
+```bash
+pnpm --filter web realtime:build                                   # -> web/dist/realtime.js (+ .map, package.json, realtime.meta.json)
+SEAT_SECRET=dev-only-not-a-secret pnpm --filter web realtime:start          # DATABASE_URL exported as above; ALLOWED_ORIGINS defaults to http://localhost:3000; logs JSON lines; "realtime process ready" when listening
+curl -fsS http://127.0.0.1:4000/healthz                            # {"status":"ok"} when the database answers, 503 {"status":"error"} otherwise
+```
+
+Until PR G ships the invite pages, a remote game is created from code:
+`createInvite` and `claimSeat` in `web/src/server/invites.ts` (both seats),
+`buildSeatCookie` in `web/src/realtime/auth.ts` for the `Cookie` header, then
+a WebSocket to `ws://127.0.0.1:4000/ws?game=<gameId>` per seat and a `join`
+message — `web/tests/realtime/ws-client.ts` and `pick.ts` are framework-free
+helpers for exactly that (the server suite and the smoke script below use
+them). Stop the process with Ctrl-C / `SIGTERM`: it closes every socket with
+1001, stops the sweep, disconnects Prisma and exits (non-zero after 10 s).
 
 Playing locally: open http://localhost:3000, pick a board under "Choose your
 board" (persisted in `localStorage` as `bg.theme`; the header switch on the
@@ -221,6 +278,7 @@ pnpm --filter bg-node build                # napi build --platform --release -> 
 pnpm test                                  # all workspace packages: web Vitest (web/tests/engine-parity.test.ts checks bg-wasm against engine/vectors and skips with a banner when engine/bg-wasm/pkg is not built) and bg-node's node:test parity test
 pnpm --filter web exec playwright install chromium   # once, before the first e2e run
 pnpm --filter web build && pnpm --filter web test:e2e   # Playwright against `next start` (started by playwright.config.ts); the six specs are listed below
+pnpm --filter web realtime:build                        # the realtime bundle (web/dist); tests/realtime/build.test.ts builds and runs it under `pnpm test` as well
 cd engine && cargo test                    # Rust (~40 s in debug; bg-core's oracle property tests dominate; the full decision-vector drift tests run in release only)
 cd engine && cargo test --release -p bg-bot -p bg-wasm --test perf --test vectors -- --include-ignored --show-output   # as CI runs them: perf (mean of 10 club decisions < 700 ms natively), full drift test, and every decisions.json entry through bg-wasm's JSON layer (the debug `cargo test` runs a subset)
 ```
@@ -285,6 +343,7 @@ rather than skips:
  && pnpm --filter web prisma:migrate:deploy \
  && pnpm lint && pnpm typecheck \
  && pnpm --filter bg-node build && pnpm --filter bg-node test && pnpm test && pnpm build \
+ && pnpm --filter web realtime:build \
  && pnpm --filter web test:e2e \
  && docker build --platform linux/amd64 -t backgammon:local . \
  && docker compose -f web/docker-compose.dev.yml down -v
@@ -296,9 +355,10 @@ Notes:
 - Root `pnpm test` and `pnpm build` are `pnpm -r`, so they include `bg-node` (`node --test` and `napi build --release`); `pnpm test` therefore fails with a module-not-found error until the addon has been built once.
 - CI runs `pnpm test -- --coverage`. A coverage threshold is `(planned)`; none is enforced yet.
 - `docker build --platform linux/amd64` matches `deploy.yml` (the host is amd64). On an Apple-silicon machine the Rust stage then runs emulated; the `wasm-pack build` step took about 50 s there.
-- `web/tests/server-games.integration.test.ts` (verify-and-store round trip through a real PostgreSQL) runs only when `DATABASE_URL` is set and the migrations are applied — see [Run](#run); it is skipped otherwise, so a plain `pnpm test` needs no database, and it fails under `CI` when it cannot run (the `web` job provides the database). `web/tests/api-routes.test.ts` covers the two route handlers with the service mocked (status codes, error mapping, the 30/min rate limit, the 2 MiB cap counted in bytes on a chunked body, 404); `web/tests/api-games.test.ts` the service with Prisma mocked and the real engine replaying the fixture records in `web/tests/fixtures/` (including the one-guest-one-bot seat rule); `web/tests/rate-limit.test.ts` the limiter (sliding window, bounded table, IPv6 /64 keys); `web/tests/local-games.test.ts` the stored level beside a local record.
+- `web/tests/server-games.integration.test.ts` (verify-and-store round trip through a real PostgreSQL), `web/tests/server-invites.integration.test.ts` (invite, concurrent claims) and `web/tests/realtime/sessions.integration.test.ts` (a session loaded from a row, persisted turns, the abandonment sweep) run only when `DATABASE_URL` is set and the migrations are applied — see [Run](#run); they are skipped otherwise, so a plain `pnpm test` needs no database, and they fail under `CI` when they cannot run (the `web` job provides the database). `web/tests/api-routes.test.ts` covers the two route handlers with the service mocked (status codes, error mapping, the 30/min rate limit, the 2 MiB cap counted in bytes on a chunked body, 404); `web/tests/api-games.test.ts` the service with Prisma mocked and the real engine replaying the fixture records in `web/tests/fixtures/` (including the one-guest-one-bot seat rule); `web/tests/rate-limit.test.ts` the limiter (sliding window, bounded table, IPv6 /64 keys); `web/tests/local-games.test.ts` the stored level beside a local record. The realtime suites are listed under **Multiplayer** in [Web app](#web-app).
+- `web/tests/realtime/build.test.ts` runs `scripts/build-realtime.mjs` and checks the result (an ESM bundle with `ws`, `@prisma/client` and the generated client external and zod inside, no wasm bytes, a source map, `dist/package.json`), then starts `node dist/realtime.js` without `DATABASE_URL`/`SEAT_SECRET` and expects the JSON error line and exit code 1 — the bundle is loaded by a real Node process on every `pnpm test`, which is how CI covers it without a separate step (`ci.yml` is unchanged; the `web` job's `pnpm test` includes it).
 - CI's `web` job runs a `postgres:16-alpine` service container (user/database `backgammon`, a throwaway password, port 5439 like the development compose), sets `DATABASE_URL` for the whole job and runs `pnpm prisma:migrate:deploy` right after `pnpm install`, so the integration test, the API e2e and the game posts of the other e2e specs go through a real database on every push.
-- Image smoke test: the container needs a database (its entrypoint runs the migrations and refuses to start without `DATABASE_URL`), so run it with a throwaway compose file: services `app` (`image: backgammon:local`, `DATABASE_URL: postgresql://backgammon:${POSTGRES_PASSWORD}@postgres:5432/backgammon`, `ports: ["127.0.0.1:3999:3000"]`, `depends_on: postgres: condition: service_healthy`) and `postgres` (`postgres:16-alpine` with `POSTGRES_USER/PASSWORD/DB` and a `pg_isready` healthcheck), `.env` with a made-up `POSTGRES_PASSWORD`. `docker compose up -d`, wait for `curl -fsS http://127.0.0.1:3999/health` (expect `{"status":"ok"}`; the app log shows `Applying migration 20260914130432_init` on the first start and `No pending migrations to apply.` on later ones), `curl -fsS http://127.0.0.1:3999/ | grep -c 'id="board-mount"'`, `curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:3999/play/new` (expect `200`), then post a fixture: `jq '{record: ., seats: {white: {kind: "guest", name: "Player One"}, black: {kind: "bot", level: "beginner"}}}' web/tests/fixtures/finished-record.json | curl -sS -H 'content-type: application/json' --data @- http://127.0.0.1:3999/api/games` (expect `201 {"id": …}`) and `curl -fsS http://127.0.0.1:3999/api/games/<id>` (expect `{record, result, seats}`); `docker compose down -v` afterwards. A bare `docker run --rm backgammon:local` exits with `DATABASE_URL is required`, by design.
+- Image smoke test: the container needs a database (its entrypoint runs the migrations and refuses to start without `DATABASE_URL`), so run it with a throwaway compose file: services `app` (`image: backgammon:local`, `DATABASE_URL: postgresql://backgammon:${POSTGRES_PASSWORD}@postgres:5432/backgammon`, `ports: ["127.0.0.1:3999:3000"]`, `depends_on: postgres: condition: service_healthy`), `realtime` (the same image, `command: ["node", "web/dist/realtime.js"]`, the same `DATABASE_URL` plus `SEAT_SECRET`, `ALLOWED_ORIGINS: http://localhost:3999` and `PORT: "4000"`, the healthcheck from `deploy/docker-compose.prod.yml`, `ports: ["127.0.0.1:4001:4000"]`) and `postgres` (`postgres:16-alpine` with `POSTGRES_USER/PASSWORD/DB` and a `pg_isready` healthcheck, `ports: ["127.0.0.1:5440:5432"]`), `.env` with a made-up `POSTGRES_PASSWORD` and a random `SEAT_SECRET`. `docker compose up -d --wait` (all three healthy), wait for `curl -fsS http://127.0.0.1:3999/health` (expect `{"status":"ok"}`; the app log shows `Applying migration …` on the first start and `No pending migrations to apply.` on later ones — the realtime log shows the same entrypoint lines, then `listening` and `realtime process ready` as JSON), `curl -fsS http://127.0.0.1:3999/ | grep -c 'id="board-mount"'`, `curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:3999/play/new` (expect `200`), then post a fixture: `jq '{record: ., seats: {white: {kind: "guest", name: "Player One"}, black: {kind: "bot", level: "beginner"}}}' web/tests/fixtures/finished-record.json | curl -sS -H 'content-type: application/json' --data @- http://127.0.0.1:3999/api/games` (expect `201 {"id": …}`) and `curl -fsS http://127.0.0.1:3999/api/games/<id>` (expect `{record, result, seats}`). Realtime: `curl -fsS http://127.0.0.1:4001/healthz` (expect `{"status":"ok"}`), an upgrade to `/ws?game=x` with `Origin: http://localhost:3999` and no cookie is `401`, one with `Origin: https://evil.example` is `403`, and — the container runs with `NODE_ENV=production` — one with no `Origin` header at all is `403` too (`docker compose exec app node -e …` with `http.request` and the `Upgrade: websocket` headers reaches it as `http://realtime:4000` on the compose network, the way Caddy will), and a two-client game: with `DATABASE_URL` pointing at `127.0.0.1:5440`, create an invite and claim the seat (`createInvite`/`claimSeat`), open one `ws` per seat with its `bg_seat_<gameId>` cookie **and `origin: "http://localhost:3999"` in the client options** (a Node `ws` client sends no `Origin` by itself, which production refuses) against `127.0.0.1:4001`, `join` both, play a few rolls and moves with `tests/realtime/pick.ts`, and check that every accepted action produces an `ack` for the sender and the same `state` (same `lastTurnIndex`) for both sockets and that `Game.moveLog` grows by one turn per action; `docker compose stop realtime` exits `0` after `shutting down` / `shut down`. `docker compose down -v` afterwards. A bare `docker run --rm backgammon:local` exits with `DATABASE_URL is required` (the entrypoint, before anything else), and `docker run --rm --entrypoint node backgammon:local web/dist/realtime.js` (the bundle without the entrypoint and without variables) exits `1` with `missing required environment variable(s): DATABASE_URL, SEAT_SECRET, ALLOWED_ORIGINS` as a JSON line, by design (`ALLOWED_ORIGINS` is named because the image sets `NODE_ENV=production`).
 - `pnpm --filter web test:e2e` runs `next start`, which warns that it "does not work with output: standalone"; for the e2e the plain server is fine (the image runs `node web/server.js` from the standalone output).
 
 ## Engine
@@ -774,7 +834,10 @@ jsdom for component tests, Playwright for e2e.
   finished — the error text says which), `413`, `429`, `500 { error: "the
   game could not be saved" }` with the detail only in the server log. `GET
   /api/games/<id>` returns exactly `{ record, result, seats }` (`result` =
-  `{ winner, kind, points, score }`) or `404 { error }`. There is no
+  `{ winner, kind, points, score }`) or `404 { error }`; while a remote
+  game is still `created`/`active` the record comes without its `seed`
+  (the dice follow from it and both players know the game id — see
+  **Multiplayer**), with it once the game is `finished`/`abandoned`. There is no
   server-side idempotency: the browser remembers what it posted under
   `bg.games.<id>.posted` (a 400 is remembered too and not retried; a network
   failure or 5xx is not remembered, so the game is posted again the next
@@ -784,13 +847,160 @@ jsdom for component tests, Playwright for e2e.
   failure (a 5xx reads `server error (HTTP 500)`, since its body is generic
   by design), or "The server refused this game: <reason>. It stays on this
   device." for a 400. The schema
-  (`web/prisma/schema.prisma`: `Game`, `GameSeat` per spec section 5.5,
+  (`web/prisma/schema.prisma`: `Game`, `GameSeat`, `ChatMessage` per spec
+  section 5.5 — see **Multiplayer** for the invite and chat columns;
   `DATABASE_URL` read lazily so builds and tests need no database) and the
-  committed SQL migration (`web/prisma/migrations/20260914130432_init`) are
-  applied by the container entrypoint at every start (`prisma migrate
-  deploy`), so the image starts against an empty database. `DATABASE_URL`
+  committed SQL migrations (`web/prisma/migrations/20260914130432_init`,
+  `20260915155454_chat_and_invites`) are applied by the container
+  entrypoint at every start (`prisma migrate deploy`), so the image starts
+  against an empty database. `DATABASE_URL`
   is the only configuration (`postgresql://…`; composed on the host from
   `POSTGRES_PASSWORD` in `deploy/docker-compose.prod.yml`).
+- **Multiplayer, server side** (`web/src/realtime`, `web/src/server/invites.ts`,
+  `web/prisma`; spec §5.3–5.5, §8, §6.7; plan:
+  [docs/superpowers/plans/2026-09-15-multiplayer.md](docs/superpowers/plans/2026-09-15-multiplayer.md),
+  whose domain conventions are binding). *Schema*: `Game.token` (invite
+  token, 16 random bytes base64url, unique, kept on the row after both seats
+  are claimed so `/g/<token>` can still resolve the game for a cookie
+  holder), `Game.status` `created | active | finished | abandoned`,
+  `Game.updatedAt` (`@updatedAt`, the "last action" the abandonment sweep
+  reads; maintained by the Prisma client, which applies it to `updateMany`
+  as well — every accepted-action write goes through the guarded
+  `game.updateMany` of `session-store.ts`, and the integration test asserts
+  the clock moves), `GameSeat.seatSecretHash`, `GameSeat.guestName`,
+  and `ChatMessage { id, gameId, seat, text, createdAt }` with an index on
+  `(gameId, createdAt)` (migration `20260915155454_chat_and_invites`).
+  *Invites and seats* (`invites.ts`): `createInvite` writes a `created` game
+  with its seed, an empty record and two seats (the creator's claimed, the
+  other open) and returns the token plus the creator's seat secret;
+  `claimSeat` gives the open seat to the first claimant with `UPDATE … WHERE
+  seatSecretHash IS NULL` as the guard (two concurrent claims: exactly one
+  wins, the other sees `"taken"`) and turns the game `active` in the same
+  transaction with `UPDATE … WHERE status = 'created'` — a claim racing the
+  sweep that just abandoned a day-old invite rolls back and is `"taken"`
+  rather than resurrecting the game; `getInvite` is the lookup for the
+  claim page. Seat 0 = White,
+  seat 1 = Black; the creator may pick either colour. *Seat cookie*
+  (`realtime/auth.ts`): `bg_seat_<gameId>=<seat>.<secret>` (`HttpOnly;
+  Secure; SameSite=Lax; Path=/`, 30 days; browsers accept `Secure` on
+  `http://localhost`, not on `http://127.0.0.1`); the server stores only
+  SHA-256(secret) and compares in constant time. *Realtime process*
+  (`main.ts` → `server.ts`): a plain `http` server with `GET /healthz`
+  (`SELECT 1`; 503 when it fails) and a `ws` server on `/ws?game=<gameId>`;
+  the upgrade is refused before the handshake with a real status — 404 other
+  path or unknown game, 400 no `game`, 403 an `Origin` outside the
+  allowlist (`origin.ts`: the `ALLOWED_ORIGINS` list, scheme, host and port
+  all matching — a same-site sibling such as another subdomain is refused; a
+  handshake without `Origin` is not a browser's and passes outside
+  `NODE_ENV=production` only), 401 no or wrong seat cookie, 503 shutting
+  down. A seat holds at most 4 open sockets (`connections.ts`,
+  `MAX_SOCKETS_PER_SEAT`): when a fifth attaches, the oldest is closed with
+  4001 "too many connections" (`TOO_MANY_SOCKETS_CLOSE_CODE`). Protocol (`protocol.ts`,
+  zod on both directions; every client message carries a client-generated
+  `id`): client → `join`, `roll`, `move { play }` (notation relative to the
+  mover), `double`, `take`, `drop`, `resign { kind }`, `acceptResign`,
+  `declineResign`, `nextGame`, `chat { text }` (1–500 chars), `ping`; server
+  → `snapshot` (on `join`: seat, `status`, record, `MatchState`, seats,
+  `awaitingNextGame`, `nextGame { votes, startsAt }`, `resignOffer`,
+  presence, chat tail), `state` (after every accepted action, to both
+  seats: record, match, `lastTurnIndex`), `ack { id }`, `rejected { id,
+  code, message }` with codes `notYourTurn | illegal | wrongPhase | invalid
+  | rateLimited | gameOver`, `chat`, `presence`, `gameOver { result,
+  matchOver }`, `resignOffered { offer }`, `resignCleared { offer, reason }`,
+  `pong`. Every accepted message is acked except `ping`; `join` answers
+  `[snapshot, ack]`. The record on the wire (`protocol-engine.ts`
+  `WireRecord`) carries **no seed while the game is live** — the dice
+  stream is a function of the seed, so either seat could otherwise list
+  every future roll of both players — and the seed once the game is
+  `finished`/`abandoned` (the finishing `state`, and every later snapshot),
+  so a player can verify the rolls afterwards. *Resignation is an offer*
+  (deviation from the plan's protocol block, where `resign` was applied
+  unilaterally and the resigner priced their own loss): `resign { kind }`
+  from the player on roll is acked once registered — nothing is conceded
+  yet — and broadcast as `resignOffered` with the points the rules award
+  (Jacoby included); the opponent's `acceptResign` appends the resign turn
+  and ends the game, `declineResign` clears it (`resignCleared` with reason
+  `declined`), and any accepted game action of the offerer withdraws it
+  (`resignCleared … withdrawn` precedes that action's `state`); a repeated
+  offer replaces the previous one. *Idempotency*: the session remembers each
+  seat's last 50 message ids with their answers (`replies.ts`) and repeats
+  the stored `ack`/`rejected` for a resent id without acting again (a chat
+  resent after a lost `ack` is stored once; `join` and `ping` are never
+  replayed), so client ids must be unique per seat across reconnects and
+  reloads — the browser transport (PR G) must use `crypto.randomUUID()`,
+  not a counter. Votes, deadline and offer live in memory only: a rebuilt
+  session reports `nextGame { votes: [false,false], startsAt: null }` and
+  `resignOffer: null`. Limits: more than 20 messages per 10 s **per seat of
+  a game** (`limits.ts` window, `connections.ts` budget shared by all the
+  seat's sockets, dropped once its last socket closed and the window
+  passed) → `rateLimited` (every frame counts, valid or not); a frame over
+  8 KiB closes the socket with 1009. *Authority* (`session.ts`,
+  `session-rules.ts`, `session-derive.ts`): one `GameSession` per game
+  holds the record and `MatchState`; the server never trusts a client
+  position — `move` is checked against `legalPlays` for the current dice,
+  cube actions against the engine's phase, dice come from the record seed
+  exactly as in bot games (`dice.ts`'s `DiceRng` port, re-verified by
+  `replay`), a turn with no legal move is forfeited by the server, the
+  opening roll is drawn when both seats are claimed. Every accepted action
+  is appended, replayed, persisted (`Game.moveLog`, `status`, and on a
+  finish `result` + `finishedAt` — the same row shape the review page
+  reads) and only then broadcast; `handle` calls are serialised per
+  session, and when persistence fails the state is untouched and the
+  offending socket is closed with 1011 (the client reconnects, takes the
+  snapshot and resends). Between the games of a match either seat sends
+  `nextGame`; the next game starts when both have, or 30 s after the first
+  vote (`session-next-game.ts`); should the store refuse that opening roll
+  on the timer, it is retried with backoff — 5 s, 10 s, 20 s
+  (`NEXT_GAME_RETRY_MS` doubling, `NEXT_GAME_RETRIES` = 3) — and, those
+  spent, once more on the next frame from either seat (the snapshot's
+  `nextGame.startsAt` reports the armed retry), so the match does not
+  stall while anyone is there. *Sessions* (`sessions.ts`, `session-store.ts`):
+  loaded from Postgres on first use by replaying `moveLog` (single flight
+  per game), kept in memory while a socket holds a lease, evicted 60 s
+  after a finish or 30 min without a socket; the abandonment sweep (every
+  10 min) marks games with no action for 24 h `abandoned` with an update
+  guarded on `updatedAt` (an action landing at the same moment wins) and
+  evicts the in-memory session only once that update changed the row —
+  a losing update leaves session and leases untouched — then closes the
+  game's sockets with 4000, and a later connection gets a read-only
+  snapshot (`status: "abandoned"`). Presence is the server's view (a seat
+  is online while any of its sockets is open) and is pushed to both seats
+  on connect and last-socket close, and into any session the registry
+  hands out that the server has not synced yet (a session rebuilt from the
+  row between two frames of an open socket starts with nobody online); the
+  server pings every 15 s and terminates a socket silent for 30 s, on its
+  injectable clock. `SIGTERM`/`SIGINT` drain: every socket closed with
+  1001, the sweep stopped, Prisma disconnected, exit 0 (1 after 10 s).
+  Logging (`log.ts`): JSON lines on stdout, levels from `LOG_LEVEL`, errors
+  flattened to `{ name, message }`; secrets are never logged (`SEAT_SECRET`
+  is checked for presence only). *Environment* (`env.ts`): `DATABASE_URL`,
+  `SEAT_SECRET` required; `ALLOWED_ORIGINS` (comma-separated bare origins)
+  required under `NODE_ENV=production`, default `http://localhost:3000`
+  otherwise; `PORT` (default 4000), `HOST` (default `0.0.0.0`);
+  `NODE_ENV=production` also refuses handshakes without `Origin`. *Not in
+  this piece*: the browser side
+  — invite pages and API routes, the `RemoteGame` transport in the store,
+  the chat tab, "Leave game", the two-browser e2e — is `(planned)` (PR G),
+  clocks `(planned)` (PR H); `GameSeat.userId` stays null until members.
+  *Tests* (`web/tests/realtime`): `auth` (cookie build/parse, hash
+  verification), `protocol` (schemas, reject matrix, the seedless wire
+  record), `origin` (the allowlist), `session` and `session-match` (two
+  seats through a seeded game and a 3-point match over the real wasm
+  engine via `harness.ts`/`drive.ts`/`pick.ts`, records replaying to the
+  same state), `session-integrity` (no seed on the wire until the end,
+  resign offer/accept/decline/withdraw, resent ids answered from memory,
+  snapshot status/votes/deadline, the next-game retry with backoff and
+  its restart on the next frame), `sessions`
+  (registry with Prisma mocked and fake timers: leases, eviction, the
+  sweep updating before it evicts) and `sessions.integration` (real
+  database, `updatedAt` advancing on every action), `server` (`ws` clients
+  against an in-process server on an ephemeral port: 401 without a cookie,
+  403 foreign or — in production — missing Origin, 4001 to the oldest
+  socket when a seat opens a fifth, join → snapshot, action
+  → ack + state to both, presence including a session rebuilt mid-socket,
+  ping/pong, the per-seat rate limit, oversize frame → 1009, heartbeat on
+  an injected clock, shutdown → 1001, `/healthz`), `env`, `log`, `build`
+  (the bundle), plus `tests/server-invites*.test.ts` for the services.
 - **Tests**: `pnpm --filter web test` (engine client/worker protocol, store
   against `MockEngine` and against the real wasm via the Node loader, dice
   parity with the engine's seed-42 vector, record helpers, geometry, URL
@@ -849,11 +1059,12 @@ jsdom for component tests, Playwright for e2e.
   checks the tarball (exactly one image, tagged `backgammon:current`) before
   `docker load`, extracts `/deploy/docker-compose.yml` and
   `/deploy/backgammon.caddy` from the image and validates both (compose:
-  normalised with `docker compose config`, only services `app`/`postgres`,
-  images `backgammon:current`/`postgres:*-alpine`, volume `postgres-data`,
-  networks `edge`/`internal`, no privileged/host-namespace/bind-mount/ports
-  keys; Caddy: only the `backgammon.automated.ink` site block, and it must
-  `caddy adapt`), and only then installs the compose file, runs `docker
+  normalised with `docker compose config`, only services
+  `app`/`postgres`/`realtime`, images `backgammon:current`/`postgres:*-alpine`,
+  volume `postgres-data`, networks `edge`/`internal`, no
+  privileged/host-namespace/bind-mount/ports keys; Caddy: only the
+  `backgammon.automated.ink` site block, and it must `caddy adapt`), and
+  only then installs the compose file, runs `docker
   compose up -d`, swaps the snippet into `/opt/caddy/sites`, validates the
   full Caddyfile (restoring the previous snippet on failure), reloads Caddy
   and prunes old images. The workflow then polls `/health` and `/` for up to
@@ -882,29 +1093,50 @@ host deploy.
   `Caddyfile` is a single `import /etc/caddy/sites/*.caddy`; `/opt/caddy/sites`
   is mounted read-only into the container. Each application ships its own
   snippet; this repository ships `deploy/backgammon.caddy`
-  (`backgammon.automated.ink` reverse-proxied to `backgammon-app:3000`). The
-  realtime `/ws*` route from the spec is `(planned)`.
+  (`backgammon.automated.ink`: `handle /ws* { reverse_proxy
+  backgammon-realtime:4000 }` for the WebSocket process, everything else
+  reverse-proxied to `backgammon-app:3000`; Caddy proxies WebSocket upgrades
+  without further configuration).
 - `/opt/backgammon` holds `docker-compose.yml` (extracted from the image on
   every deploy) and `.env`. Containers: `backgammon-app` (port 3000, networks
   `edge` + `internal`; `DATABASE_URL` is composed in the compose file from
   `POSTGRES_PASSWORD`; the entrypoint applies the Prisma migrations before the
   server starts, and `depends_on: condition: service_healthy` waits for
-  Postgres) and `backgammon-postgres` (PostgreSQL 16, network
-  `internal`, volume `postgres-data`). Image tag on the host: `backgammon:current`.
+  Postgres), `backgammon-realtime` (the same image with `command: node
+  web/dist/realtime.js`, port 4000 inside the networks `edge` + `internal`
+  only — no published port, Caddy reaches it by container name; the same
+  `DATABASE_URL`, `SEAT_SECRET` from `.env`, `ALLOWED_ORIGINS` as the literal
+  `https://backgammon.automated.ink` (the site address the Caddy snippet
+  serves; not a secret, so not in `.env`), `PORT=4000`; `depends_on`
+  Postgres healthy and the app started; the same entrypoint, so it also runs
+  `prisma migrate deploy` — idempotent, and Prisma serialises the two
+  containers with an advisory lock — and never starts against a schema older
+  than its own; its compose healthcheck probes `/healthz` with node's `fetch`
+  because the slim image has no wget or curl) and `backgammon-postgres`
+  (PostgreSQL 16, network `internal`, volume `postgres-data`). Image tag on
+  the host: `backgammon:current`.
 - The forced command lives at `/usr/local/bin/backgammon-deploy` (source:
   `deploy/backgammon-deploy.sh`). Its allowlists (services, images, volumes,
   networks, site address) are part of the script: bumping the postgres image
-  or adding a service requires reinstalling the script on the host. The snippet
-  check also rejects quotes, comments and heredocs, so a future directive that
-  needs them (e.g. `header`) requires a script change as well.
+  or adding a service requires reinstalling the script on the host. The
+  `realtime` service is in the repository copy's `ALLOWED_SERVICES`; the host
+  copy must be updated to match, and `SEAT_SECRET` added to
+  `/opt/backgammon/.env` (32 random bytes hex, generated on the host), before
+  the first deploy that carries this compose file — the host check refuses
+  the file otherwise (`compose services must be exactly: app, postgres`). The
+  snippet check also rejects quotes, comments and heredocs, so a future
+  directive that needs them (e.g. `header`) requires a script change as well.
 
 ## Secrets
 
 No credentials are in the repository, the compose file, or the image.
 
-- Host only, `/opt/backgammon/.env` (root:deploy, mode 640): `POSTGRES_PASSWORD`.
-  `AUTH_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAIL`, `SEAT_SECRET`
-  are `(planned)` for later pieces.
+- Host only, `/opt/backgammon/.env` (root:deploy, mode 640): `POSTGRES_PASSWORD`
+  and `SEAT_SECRET` (required by the `realtime` service; the compose file
+  refuses to start without it; today only its presence is checked — seat
+  cookies are verified against per-seat hashes — so rotating it has no
+  effect on live games). `AUTH_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
+  `ADMIN_EMAIL` are `(planned)` for later pieces.
 - GitHub environment `production`: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`.
 - GitHub repository secrets: `GH_APP_ID`, `GH_APP_PRIVATE_KEY` for the GitHub
   App that authors pull requests (permissions: Contents and Pull requests read

@@ -234,6 +234,20 @@ describe("GET /api/games/[id]", () => {
     expect(getGameMock).toHaveBeenCalledWith(stored.id);
   });
 
+  it("leaves the seed out of the record of a remote game that is still live", async () => {
+    for (const status of ["created", "active"] as const) {
+      getGameMock.mockResolvedValue({ ...stored, status, botLevel: null, result: null, finishedAt: null });
+      const body = (await (await get(stored.id)).json()) as { record: { seed?: number } };
+      expect(body.record, status).not.toHaveProperty("seed");
+      expect(body.record, status).toEqual({ length: record.length, rules: record.rules, turns: record.turns });
+    }
+    for (const status of ["finished", "abandoned"] as const) {
+      getGameMock.mockResolvedValue({ ...stored, status });
+      const body = (await (await get(stored.id)).json()) as { record: { seed?: number } };
+      expect(body.record.seed, status).toBe(record.seed);
+    }
+  });
+
   it("answers 404 for an unknown id", async () => {
     getGameMock.mockResolvedValue(null);
     const res = await get("cm0000000000000000000002");

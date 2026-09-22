@@ -1,4 +1,7 @@
 backgammon.automated.ink {
 	encode zstd gzip
+	handle /ws* {
+		reverse_proxy backgammon-realtime:4000
+	}
 	reverse_proxy backgammon-app:3000
 }

@@ -1,5 +1,5 @@
 # Production compose for backgammon.automated.ink (Hetzner, /opt/backgammon).
-# Secrets only in /opt/backgammon/.env on the host (POSTGRES_PASSWORD).
+# Secrets only in /opt/backgammon/.env on the host (POSTGRES_PASSWORD, SEAT_SECRET).
 # Extracted from the image by /usr/local/bin/backgammon-deploy on every deploy.
 services:
   app:
@@ -12,6 +12,40 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks: [edge, internal]
+
+  # The realtime (WebSocket) process: the same image, a different command.
+  # Caddy routes /ws* to backgammon-realtime:4000 (deploy/backgammon.caddy);
+  # no published port. The image's entrypoint runs `prisma migrate deploy`
+  # for this container too (idempotent; Prisma serialises concurrent runs
+  # with an advisory lock), so it never starts against a schema older than
+  # its own. PORT must be set: the image's default is the app's 3000. The
+  # health check uses node's fetch — the slim image has no wget or curl.
+  # ALLOWED_ORIGINS lists the browser Origins allowed to open a socket
+  # (web/src/realtime/origin.ts; comma-separated): the site address, the
+  # same one the Caddy snippet serves; a literal here, not a secret. Under
+  # NODE_ENV=production a handshake without Origin is refused too.
+  realtime:
+    image: backgammon:current
+    container_name: backgammon-realtime
+    restart: unless-stopped
+    command: ["node", "web/dist/realtime.js"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://backgammon:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing from /opt/backgammon/.env}@postgres:5432/backgammon
+      SEAT_SECRET: ${SEAT_SECRET:?SEAT_SECRET missing from /opt/backgammon/.env}
+      ALLOWED_ORIGINS: https://backgammon.automated.ink
+      PORT: "4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     networks: [edge, internal]
 
   postgres:
